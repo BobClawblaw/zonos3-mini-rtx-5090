@@ -16,15 +16,17 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
 - The release's 27 voices (`/v1/voices`), a voice cloned from a WAV clip sent as `ref_audio`, or a voice given as
   reference codes (`speaker_reference_codes`).
 - Replies as WAV (the default), MP3, Opus in Ogg, FLAC, AAC or raw PCM; `"stream": true` streams raw PCM.
+- Numbers, dates and currency rewritten into words before they are spoken ("$5" is said "five dollars"), by the
+  publisher's own normalizer. `language` picks its grammar (`en_us` by default, 44 codes such as `en_gb`, `fr_fr`,
+  `de`, `ja`, `cmn`); `"text_normalization": false` speaks the text as typed.
 - Sampling fields `temperature`, `top_p`, `top_k` (1 to 4096) and `seed`. A seeded request gives the same bytes every
   time, in every format.
 - Refusals with a message naming the problem: an unknown voice, a clip that is not a WAV file or is shorter than half
-  a second, malformed reference codes, an empty input, `top_k` out of range.
+  a second, malformed reference codes, an empty input, `top_k` out of range, an unknown `language`.
 
-Not served: more than one request at a time, text normalization (text is spoken as typed, so write numbers the way
-they should be said), speaker and control guidance, condition values, speech editing, accent adapters, phoneme,
-start and pause tokens, and the release's `full_mr` decoder (the server uses `keep2_plain`, the reference servers'
-default). `speed` and `instructions` are refused: the model has no such controls.
+Not served: more than one request at a time, speaker and control guidance, condition values, speech editing, accent
+adapters, phoneme, start and pause tokens, and the release's `full_mr` decoder (the server uses `keep2_plain`, the
+reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
 
 Arithmetic is fp32 throughout, checked against the publisher's code run in fp32 with exact gates. The publisher's
 CUDA servers run the codec in bf16, so the codes this port encodes from a clip are not bit for bit the ones their
@@ -33,24 +35,28 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 ## Speed
 
 One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe
-harness's `speech` plan. Each case was asked once, then three times whole and three times streamed.
+harness's `speech` plan. Each case was asked once, then three times whole and three times streamed. An idle second
+server (this recipe's previous pin) held 4.3 GB of the same card during the run.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
-| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.2 | 0.04 s, 0.62 s |
-| A short sentence, the default voice | 4.13 s | 0.16 s | 26.2 | 0.03 to 0.04 s, 0.16 s |
-| A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.04 s, 0.20 s |
-| A voice cloned from the short reply | 5.13 s | 0.73 s | 7.1 | 0.58 s, 0.74 s |
+| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.3 | 0.04 s, 0.62 s |
+| A short sentence, the default voice | 4.13 s | 0.16 s | 26.3 | 0.03 s, 0.16 s |
+| A second voice, `imogen` | 5.13 s | 0.19 s | 27.0 | 0.04 s, 0.19 to 0.20 s |
+| A voice cloned from the short reply | 5.13 s | 0.70 s | 7.4 | 0.54 s, 0.70 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
   the whole reply's.
-- **Encoded replies:** the long passage as MP3 took 0.76 s, as Opus 0.67 s and as FLAC 0.62 s, each asked twice with
-  equal bytes. AAC is not in the plan; it was checked by hand.
+- **Encoded replies:** the long passage as MP3 took 0.76 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
+  equal bytes. AAC is not in the plan; it was checked by hand on the previous pin.
+- **Text normalization:** six written sentences (three English, one each German, Portuguese and Japanese, from the
+  normalizer's own test cases) each gave the same bytes as their expected spoken form sent with normalization off
+  ("In 1990, he moved." as "In nineteen ninety, he moved."), and other bytes than the written text spoken as typed.
 - **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 9.3 s here.
+  first request with a clip also loads the clip encoder: 9.2 s here.
 - **A busy server refuses.** Of three requests sent together, one was spoken (the same bytes as alone) and two got 503.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
-  `speaker_reference_codes` and an empty input each got 400.
+  `speaker_reference_codes`, an empty input and an unknown `language` each got 400.
 - **Intelligibility:** Whisper large-v3-turbo (`tools/asr.py`) transcribed all four replies with word error rate 0.
   That is four English sentences, not a quality evaluation: no listening test, and no comparison of voices against
   the publisher's own server.
@@ -58,8 +64,9 @@ harness's `speech` plan. Each case was asked once, then three times whole and th
 ## Memory
 
 The engine's own count of device memory: 3,828,406,528 bytes after load, and 9,471,917,216 once a request with a clip
-has loaded the clip encoder (`nvidia-smi` showed 4,282 MiB and 10,092 MiB). A card needs about 4.5 GiB free to speak
-and about 10.5 GiB to clone.
+has loaded the clip encoder (`nvidia-smi` showed 4,282 MiB and 10,092 MiB on the previous pin's run, alone on the
+card; this run's `nvidia-smi` lines in `evidence/` include the second server). A card needs about 4.5 GiB free to
+speak and about 10.5 GiB to clone.
 
 `python3 -m rtx up` checks that the card has room for the load before it starts, and says so when there is not
 enough left for cloning.
@@ -67,12 +74,13 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `9757d2378`, kept as
-the tag `zonos3-openai-9757d2378` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-two changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `2a4379862`, kept as
+the tag `zonos3-openai-2a4379862` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+three changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
-- OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice.
+- OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
+- text normalization (`docs/recipes/zonos3-mini.md` in the pinned commit, "Text normalization").
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -82,15 +90,21 @@ MP3, Opus and AAC come from libraries the server loads when a reply is first ask
 FDK AAC (Debian or Ubuntu: `sudo apt install libmp3lame0 libopus0 libfdk-aac2`). A format whose library is missing
 is refused with the line to act on; WAV, PCM and FLAC need nothing. `validate` and `up` say which are missing.
 
+Text normalization is Zyphra's [zyphra-textnorm](https://github.com/Zyphra/zyphra-textnorm) 0.2.0 (MIT, with
+Apache-2.0 grammars from NVIDIA NeMo), the Rust library the publisher's own servers use. `python3 -m rtx build`
+compiles it at commit `170c571e` and puts it in `lib/` beside the engine, where the server loads it on the first
+request. That needs Rust 1.88 or later (`cargo` in `local.toml`). Without it the build says so and everything else
+works: text is then spoken as typed, and `"text_normalization": true` is refused.
+
 ## Use
 
 Needs Linux with an NVIDIA card (run on an RTX 5090 only), CUDA 13 with `nvcc`, Zig 0.17.0, git, Python 3.11+ and
-the `hf` command.
+the `hf` command; Rust 1.88 or later for text normalization.
 
 ```sh
-cp local.example.toml local.toml     # set zig, nvcc and where the release and a TensorFold clone live
+cp local.example.toml local.toml     # set zig, nvcc, cargo and where the release and a TensorFold clone live
 python3 -m rtx fetch                 # the release at its pin, 15 GB, into model_dir
-python3 -m rtx build                 # the pinned engine, under ~/.cache/zonos3-mini
+python3 -m rtx build                 # the pinned engine and the text normalizer, under ~/.cache/zonos3-mini
 python3 -m rtx validate
 python3 -m rtx up --foreground       # the API on :30117 and the test page on :30118; Ctrl-C stops both
 ```
@@ -107,7 +121,8 @@ python3 -m rtx say "Now in the clip's voice." -o cloned.wav --ref clip.wav
 python3 -m rtx down
 ```
 
-`say` picks the format from the file's extension (`.wav .mp3 .ogg .flac .aac .pcm`). Other commands: `status`,
+`say` picks the format from the file's extension (`.wav .mp3 .ogg .flac .aac .pcm`); `--language de` names the
+normalizer's grammar and `--as-typed` turns normalization off. Other commands: `status`,
 `logs`, `voices`, `command` (prints the serve command) and `systemd` (writes a systemd user unit that keeps
 `up --foreground` running; enabling it is left to you). Settings live in `recipe.toml`; `local.toml` and upper-case
 environment variables override them (`PORT=30200 python3 -m rtx up`). To serve other machines set `host = "0.0.0.0"`

@@ -7,6 +7,7 @@ tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha (made 
 # tensorfold_sha = "..."                 # another engine commit than recipe.toml's pin
 zig = "~/tools/zig-0.17.0/zig"
 nvcc = "/usr/local/cuda/bin/nvcc"
+# cargo = "~/.cargo/bin/cargo"          # Rust 1.88 or later, when the system's cargo is older
 
 [local]
 host = "127.0.0.1"

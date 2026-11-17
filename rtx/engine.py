@@ -1,14 +1,16 @@
 """The engine: a worktree of the TensorFold checkout at the pinned commit, built under tf_cache (never in the
 checkout). The family needs no libtfgrammar: it speaks, with no tools or schemas."""
 
+import re
+import shutil
 import subprocess
 from pathlib import Path
 
-from .config import INCLUDE, Settings
+from .config import INCLUDE, TEXTNORM_REPO, TEXTNORM_RUST, TEXTNORM_SHA, Settings
 
 # where tensorfold_sha lives until the family reaches TensorFold's main: a tag, since the PR branch is rebased
 TENSORFOLD_REPO = "https://github.com/BobClawblaw/TensorFold"
-TENSORFOLD_REF = "refs/tags/zonos3-openai-9757d2378"
+TENSORFOLD_REF = "refs/tags/zonos3-openai-2a4379862"
 
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -39,4 +41,37 @@ def build(s: Settings, rebuild: bool = False) -> Path:
         _run(["git", "-C", str(src), "worktree", "add", "--detach", str(s.worktree), s.tensorfold_sha])
     if rebuild or not s.built_binary.exists():
         _run([s.path(s.zig).as_posix(), "build", "native", "-Doptimize=ReleaseFast", f"-Dnvcc={s.path(s.nvcc)}", f"-Dsm={s.sm}"], cwd=s.worktree)
+    textnorm(s, rebuild)
     return s.built_binary
+
+
+def _rust(cargo: str) -> tuple[int, int] | None:
+    try:
+        out = subprocess.run([cargo, "--version"], capture_output=True, text=True).stdout
+    except OSError:
+        return None
+    m = re.match(r"cargo (\d+)\.(\d+)", out)
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def textnorm(s: Settings, rebuild: bool = False) -> Path | None:
+    """Zyphra's text normalizer as a shared library in the engine's lib/. Without Rust the engine still serves:
+    text is then spoken as typed."""
+    if s.textnorm_lib.exists() and not rebuild:
+        return s.textnorm_lib
+    cargo = s.path(s.cargo).as_posix() if "/" in s.cargo else s.cargo
+    have, need = _rust(cargo), ".".join(map(str, TEXTNORM_RUST))
+    if have is None or have < TEXTNORM_RUST:
+        found = "no cargo" if have is None else f"cargo {have[0]}.{have[1]}"
+        print(f"note: text normalization not built ({found}; it needs Rust {need} or later: set cargo in local.toml and run build again). "
+              "Numbers, dates and currency are spoken as typed until then.")
+        return None
+    src = s.textnorm_src
+    if not (src / ".git").exists():
+        src.parent.mkdir(parents=True, exist_ok=True)
+        _run(["git", "clone", TEXTNORM_REPO, str(src)])
+    _run(["git", "-C", str(src), "checkout", "--detach", TEXTNORM_SHA])
+    _run([cargo, "rustc", "--release", "--locked", "--lib", "-p", "zyphra-textnorm", "--features", "capi", "--crate-type", "cdylib"], cwd=src)
+    s.textnorm_lib.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src / "target" / "release" / "libzyphra_textnorm.so", s.textnorm_lib)
+    return s.textnorm_lib

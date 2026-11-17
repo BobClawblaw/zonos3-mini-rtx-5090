@@ -26,6 +26,8 @@ def main(argv: list[str] | None = None) -> int:
     say.add_argument("--voice", default="")
     say.add_argument("--seed", type=int)
     say.add_argument("--ref", default="", help="a WAV clip whose voice to clone")
+    say.add_argument("--language", default="", help="the text normalizer's grammar: en_us (the default), fr_fr, de, ja, ...")
+    say.add_argument("--as-typed", action="store_true", help="no text normalization: speak the text as typed")
     sub.add_parser("voices", help="the running server's voice names")
     sub.add_parser("validate", help="check the settings, the release and the build without starting anything")
     sub.add_parser("systemd", help="write the systemd user unit (not enabled) that keeps `up --foreground` running")
@@ -35,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"release {engine.fetch(s)}")
     elif a.cmd == "build":
         engine.build(s, rebuild=a.rebuild)
-        print(f"engine {s.run_binary}")
+        print(f"engine {s.run_binary}" + (f"\ntext normalizer {s.textnorm_lib}" if s.textnorm_lib.exists() else ""))
     elif a.cmd == "up":
         problems = config.validate(s)
         if problems:
@@ -50,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     elif a.cmd == "command":
         print(shlex.join(s.serve_args()))
     elif a.cmd == "say":
-        print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref))
+        print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref, a.language, a.as_typed))
     elif a.cmd == "voices":
         print(serve.voices(s))
     elif a.cmd == "validate":
@@ -58,6 +60,8 @@ def main(argv: list[str] | None = None) -> int:
         print("\n".join(problems) if problems else f"ok: {s.served_name} from {s.model} with {s.run_binary} at {s.url}")
         for fmt, pkg in config.missing_codecs():
             print(f"note: no library for {fmt} replies (Debian/Ubuntu: sudo apt install {pkg})")
+        if not s.normalizes:
+            print("note: no text normalizer: numbers, dates and currency are spoken as typed (python3 -m rtx build, with Rust 1.88 or later)")
         return 1 if problems else 0
     elif a.cmd == "systemd":
         print(systemd.write(s))

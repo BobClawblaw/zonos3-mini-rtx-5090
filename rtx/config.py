@@ -18,6 +18,12 @@ CLONE_GIB = 9.47e9 / 2**30
 # (format, library, the variable that names its file instead, Debian package)
 CODECS = (("mp3", "mp3lame", "TENSORFOLD_LIBMP3LAME", "libmp3lame0"), ("opus", "opus", "TENSORFOLD_LIBOPUS", "libopus0"),
           ("aac", "fdk-aac", "TENSORFOLD_LIBFDKAAC", "libfdk-aac2"))
+# Zyphra's text normalizer, which the server loads from lib/ beside its binary: release 0.2.0, the reference
+# repository's third_party/zyphra-textnorm submodule
+TEXTNORM_REPO = "https://github.com/Zyphra/zyphra-textnorm"
+TEXTNORM_SHA = "170c571e75034c9a9f3bece9885c36d8dae77df2"
+TEXTNORM_RUST = (1, 88)
+TEXTNORM_VAR = "TENSORFOLD_LIBZYPHRA_TEXTNORM"
 
 
 @dataclass
@@ -31,6 +37,7 @@ class Settings:
     zig: str = "zig"
     nvcc: str = "/usr/local/cuda/bin/nvcc"
     sm: str = "120"
+    cargo: str = "cargo"
     binary: str = ""
     host: str = "127.0.0.1"
     port: int = 30117
@@ -63,6 +70,20 @@ class Settings:
     @property
     def run_binary(self) -> Path:
         return self.path(self.binary) if self.binary else self.built_binary
+
+    @property
+    def textnorm_src(self) -> Path:
+        return self.cache / "textnorm" / TEXTNORM_SHA[:12]
+
+    @property
+    def textnorm_lib(self) -> Path:
+        """Where the server looks by itself: lib/ beside the bin/ its binary is in."""
+        return self.run_binary.parent.parent / "lib" / "libzyphra_textnorm.so"
+
+    @property
+    def normalizes(self) -> bool:
+        named = os.environ.get(TEXTNORM_VAR)
+        return os.path.isfile(named) if named is not None else self.textnorm_lib.exists()
 
     @property
     def page_script(self) -> Path:

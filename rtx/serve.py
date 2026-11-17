@@ -76,6 +76,8 @@ def _announce(s: Settings) -> None:
     print(f"serving {s.served_name}: API {s.url}" + (f", test page {s.page_url}" if s.page_port else ""))
     for fmt, pkg in missing_codecs():
         print(f"note: {fmt} replies will be refused until its library is installed (Debian/Ubuntu: sudo apt install {pkg})")
+    if not s.normalizes:
+        print("note: no text normalizer, so numbers, dates and currency are spoken as typed (python3 -m rtx build, with Rust 1.88 or later)")
 
 
 def up(s: Settings, foreground: bool = False) -> None:
@@ -154,8 +156,10 @@ def status(s: Settings) -> str:
     return f"pid: {pid(s) or 'not running'}\nurl: {s.url}\nhealth: {json.dumps(h) if h else 'down'}\ntest page: {s.page_url if page else 'not running'}"
 
 
-def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = None, ref: str = "") -> str:
-    """`text` spoken by the running server into `out`, whose extension picks the format; `ref` is a WAV clip to clone."""
+def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = None, ref: str = "", language: str = "",
+        as_typed: bool = False) -> str:
+    """`text` spoken by the running server into `out`, whose extension picks the format; `ref` is a WAV clip to clone,
+    `language` the normalizer's grammar, `as_typed` turns normalization off."""
     fmt = EXT.get(out.rsplit(".", 1)[-1].lower())
     if fmt is None:
         raise SystemExit(f"{out}: the extension must be one of {', '.join(sorted(EXT))}")
@@ -164,6 +168,10 @@ def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = No
         body["voice"] = voice
     if seed is not None:
         body["seed"] = seed
+    if language:
+        body["language"] = language
+    if as_typed:
+        body["text_normalization"] = False
     if ref:
         body["ref_audio"] = base64.b64encode(open(ref, "rb").read()).decode()
     headers = {"content-type": "application/json", **({"authorization": f"Bearer {s.api_key}"} if s.api_key else {})}

@@ -2,21 +2,21 @@
  "cases": {
   "passage": {
    "status": 200,
-   "first_request_s": 0.608,
+   "first_request_s": 0.63,
    "bytes": 1569960,
    "audio_s": 17.8,
    "whole_s": [
-    0.609,
+    0.607,
     0.612
    ],
-   "times_real_time": 29.2,
+   "times_real_time": 29.3,
    "stream_first_byte_s": [
     0.039,
-    0.04
+    0.039
    ],
    "stream_s": [
-    0.619,
-    0.621
+    0.617,
+    0.62
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -24,21 +24,21 @@
   },
   "short": {
    "status": 200,
-   "first_request_s": 0.159,
+   "first_request_s": 0.157,
    "bytes": 364560,
    "audio_s": 4.13,
    "whole_s": [
-    0.158,
-    0.159
+    0.157,
+    0.157
    ],
-   "times_real_time": 26.2,
+   "times_real_time": 26.3,
    "stream_first_byte_s": [
     0.034,
-    0.035
+    0.034
    ],
    "stream_s": [
-    0.161,
-    0.162
+    0.16,
+    0.161
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -50,17 +50,17 @@
    "bytes": 452760,
    "audio_s": 5.13,
    "whole_s": [
-    0.191,
+    0.19,
     0.192
    ],
-   "times_real_time": 26.9,
+   "times_real_time": 27.0,
    "stream_first_byte_s": [
     0.035,
     0.036
    ],
    "stream_s": [
-    0.196,
-    0.197
+    0.194,
+    0.195
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -68,21 +68,21 @@
   },
   "clone": {
    "status": 200,
-   "first_request_s": 9.264,
+   "first_request_s": 9.18,
    "bytes": 452760,
    "audio_s": 5.13,
    "whole_s": [
-    0.727,
-    0.733
+    0.697,
+    0.703
    ],
-   "times_real_time": 7.1,
+   "times_real_time": 7.4,
    "stream_first_byte_s": [
-    0.575,
-    0.576
+    0.538,
+    0.542
    ],
    "stream_s": [
-    0.735,
-    0.735
+    0.696,
+    0.701
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -109,6 +109,10 @@
   "empty-input": {
    "status": 400,
    "message": "{\"error\": {\"message\": \"input must be a non-empty string\", \"type\": \"invalid_request_error\"}}"
+  },
+  "unknown-language": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 request: unsupported language code 'xx'; supported: en_us, en_gb, fr_fr, de, es, it, pt_br, ja, cmn, ko, ar, bn, bg, cs, da, nl, fi, ka, el, gu, he, hi, hu, id, kn, ms, m"
   }
  },
  "busy": {
@@ -123,23 +127,79 @@
   "mp3": {
    "status": 200,
    "bytes": 285466,
-   "s": 0.756,
+   "s": 0.761,
    "starts_as": true,
    "repeat_identical": true
   },
   "opus": {
    "status": 200,
    "bytes": 142170,
-   "s": 0.666,
+   "s": 0.66,
    "starts_as": true,
    "repeat_identical": true
   },
   "flac": {
    "status": 200,
    "bytes": 713785,
-   "s": 0.622,
+   "s": 0.621,
    "starts_as": true,
    "repeat_identical": true
+  }
+ },
+ "same": {
+  "dollars": {
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "equal": true,
+   "other_differs": true
+  },
+  "year": {
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "equal": true,
+   "other_differs": true
+  },
+  "address": {
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "equal": true,
+   "other_differs": true
+  },
+  "german": {
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "equal": true,
+   "other_differs": true
+  },
+  "portuguese": {
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "equal": true,
+   "other_differs": true
+  },
+  "japanese": {
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "equal": true,
+   "other_differs": true
   }
  }
 }
