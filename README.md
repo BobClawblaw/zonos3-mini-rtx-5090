@@ -53,18 +53,20 @@ Said plainly, because the release supports more than this port serves:
 ## Setup
 
 Needs an NVIDIA card with about 11 GB free (measured on a 5090 only), CUDA 13 with `nvcc`, Zig 0.17.0, the `hf`
-command, and about 15 GB of disk for the release.
+command, Python 3.10 or later, and about 15 GB of disk for the release; `ffmpeg` for MP3 and Opus replies.
 
     ./setup.sh        # downloads the release at its pin, checks out the engine at its pin, builds it for sm_120
-    ./run.sh          # the server and its test page, in this terminal; Ctrl-C stops both
+    ./run.sh          # the server, its test page and the OpenAI-style front, in this terminal; Ctrl-C stops them
 
 Then open `http://127.0.0.1:30118/`: the test page lists the voices, speaks what you type with a seed and the
 sampling fields, keeps each take with a player and its timing, and clones a voice from an audio file you pick. The
-API is on `http://127.0.0.1:30117/v1`.
+Programs written for OpenAI's text to speech point at `http://127.0.0.1:30119/v1` (see "From Hermes and other
+OpenAI speech clients"); the server's own API is on `http://127.0.0.1:30117/v1`.
 
 - **From another machine:** `UI_BIND=0.0.0.0 ./run.sh` lets other machines open the page on port 30118. The page has
   no password, so do that only on a network you trust.
-- **Other ports:** `PORT=... UI_PORT=... ./run.sh`.
+- **Other ports:** `PORT=... UI_PORT=... FRONT_PORT=... ./run.sh`; `FRONT_BIND=0.0.0.0` opens the front to other
+  machines, also without a password.
 - **The API alone:** `./serve.sh` (its header lists `PORT`, `HOST`, `NAME`).
 - **As a service, if you want one:** `./service.sh install` keeps `run.sh` running as a systemd user service (no
   root; it starts at login and restarts on failure), and `./service.sh remove` takes it out again.
@@ -73,6 +75,37 @@ API is on `http://127.0.0.1:30117/v1`.
 with the engine (`tools/zig/zonos3_test_page.py`, standard library only). It was loaded in headless Chromium, where
 it listed the voices without a script error, and its routes were exercised with curl; its buttons were not clicked
 by an automated test.
+
+## From Hermes and other OpenAI speech clients
+
+The server itself answers WAV and PCM only, knows its own voice names and refuses a second request while it speaks.
+Clients written for OpenAI's text to speech expect more, so `run.sh` also starts a small front
+(`tools/openai_front.py`, port 30119) that they can use unchanged:
+
+- MP3, Opus, AAC and FLAC replies, transcoded from the server's WAV by `ffmpeg` (MP3 when no format is asked, as at
+  OpenAI). Without `ffmpeg` the front still answers WAV and PCM.
+- A voice name the server does not have (`alloy`, `nova`, ...) becomes the default voice (`FRONT_VOICE` picks
+  another), and any model name becomes the served one.
+- `speed` and `instructions` are dropped: the model has no such controls. The reply's `X-Zonos-Ignored` header names
+  what was dropped or replaced.
+- Requests that arrive together are spoken one after another instead of refused.
+- Everything else (`seed`, the sampling fields, `ref_audio`) passes through, and a WAV asked through the front is
+  the server's own bytes.
+
+For [Hermes Agent](https://github.com/NousResearch/hermes-agent), in `~/.hermes/config.yaml`:
+
+    tts:
+      provider: openai
+      openai:
+        api_key: local            # any value; the front does not check it
+        base_url: http://127.0.0.1:30119/v1
+        model: zonos3-mini
+        voice: rupert             # any name from /v1/voices
+
+Checked with Hermes's own speech tool (`text_to_speech`) against the front: it wrote an MP3 and an Ogg Opus file of
+the text it was given. Hermes was not run as a whole agent or through a chat platform here. The front was also sent
+the stock OpenAI request shapes with curl: each of the four formats, unknown voice and model names, and four requests
+at once, all answered 200.
 
 ## Speaking
 

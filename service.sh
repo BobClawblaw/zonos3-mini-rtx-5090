@@ -3,7 +3,7 @@
 # service.sh: optional. Keep run.sh running as a systemd user service (no root): it starts at login and restarts if
 # it fails. Without this, ./run.sh in a terminal is all you need.
 #
-#   ./service.sh install    write and start zonos3-mini.service, with the PORT, UI_PORT and UI_BIND set now
+#   ./service.sh install    write and start zonos3-mini.service, with run.sh's settings as set now
 #   ./service.sh remove     stop it and delete the unit
 #   ./service.sh status | logs
 #
@@ -19,7 +19,7 @@ Description=ZONOS3 Mini text to speech (TensorFold) and its test page
 
 [Service]
 WorkingDirectory=$PWD
-Environment=PORT=${PORT:-30117} UI_PORT=${UI_PORT:-30118} UI_BIND=${UI_BIND:-127.0.0.1}
+Environment=PORT=${PORT:-30117} UI_PORT=${UI_PORT:-30118} UI_BIND=${UI_BIND:-127.0.0.1} FRONT_PORT=${FRONT_PORT:-30119} FRONT_BIND=${FRONT_BIND:-127.0.0.1} FRONT_VOICE=${FRONT_VOICE:-default}
 ExecStart=$PWD/run.sh
 Restart=on-failure
 SuccessExitStatus=130 143
