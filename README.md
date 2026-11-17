@@ -35,28 +35,28 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 ## Speed
 
 One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe
-harness's `speech` plan. Each case was asked once, then three times whole and three times streamed. An idle second
+harness's `speech` and `speech-normalize` plans. Each case was asked once, then three times whole and three times streamed. An idle second
 server (this recipe's previous pin) held 4.3 GB of the same card during the run.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
 | A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.3 | 0.04 s, 0.62 s |
-| A short sentence, the default voice | 4.13 s | 0.16 s | 26.3 | 0.03 s, 0.16 s |
-| A second voice, `imogen` | 5.13 s | 0.19 s | 27.0 | 0.04 s, 0.19 to 0.20 s |
-| A voice cloned from the short reply | 5.13 s | 0.70 s | 7.4 | 0.54 s, 0.70 s |
+| A short sentence, the default voice | 4.13 s | 0.16 s | 26.3 | 0.03 to 0.04 s, 0.16 s |
+| A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.03 to 0.04 s, 0.19 to 0.20 s |
+| A voice cloned from the short reply | 5.13 s | 0.69 to 0.70 s | 7.4 | 0.54 s, 0.69 to 0.70 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
   the whole reply's.
-- **Encoded replies:** the long passage as MP3 took 0.76 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
+- **Encoded replies:** the long passage as MP3 took 0.75 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
   equal bytes. AAC is not in the plan; it was checked by hand on the previous pin.
-- **Text normalization:** six written sentences (three English, one each German, Portuguese and Japanese, from the
+- **Text normalization** (the `speech-normalize` plan): six written sentences (three English, one each German, Portuguese and Japanese, from the
   normalizer's own test cases) each gave the same bytes as their expected spoken form sent with normalization off
   ("In 1990, he moved." as "In nineteen ninety, he moved."), and other bytes than the written text spoken as typed.
 - **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 9.2 s here.
+  first request with a clip also loads the clip encoder: 8.6 s here.
 - **A busy server refuses.** Of three requests sent together, one was spoken (the same bytes as alone) and two got 503.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
-  `speaker_reference_codes`, an empty input and an unknown `language` each got 400.
+  `speaker_reference_codes` and an empty input each got 400, and so did an unknown `language` in the second plan.
 - **Intelligibility:** Whisper large-v3-turbo (`tools/asr.py`) transcribed all four replies with word error rate 0.
   That is four English sentences, not a quality evaluation: no listening test, and no comparison of voices against
   the publisher's own server.
@@ -170,16 +170,17 @@ request while one is spoken gets 503.
 
 ## Checking it again
 
-The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech` plan against
-the `zonos3-mini-5090` target; the run's files and the spoken replies are in `evidence/`.
+The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech` and
+`speech-normalize` plans against the `zonos3-mini-5090` target; the run's files and the spoken replies are in `evidence/`.
 
 ```sh
 git clone https://github.com/BobClawblaw/recipe-harness && cd recipe-harness
 cp targets/zonos3-mini-5090.local.example.toml targets/zonos3-mini-5090.local.toml   # the engine, the release, asr
 python3 -m harness run zonos3-mini-5090 --plan speech
+python3 -m harness run zonos3-mini-5090 --plan speech-normalize
 ```
 
-The plan starts its own server, so `python3 -m rtx down` first. The word error rate needs `tools/asr.py`'s packages
+Each plan starts its own server, so `python3 -m rtx down` first. The word error rate needs `tools/asr.py`'s packages
 (`torch`, `torchaudio`, `transformers`, `soundfile`) and downloads Whisper large-v3-turbo on first use; leave the
 target's `asr` command out to skip it.
 
