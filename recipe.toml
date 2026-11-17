@@ -1,0 +1,12 @@
+# What this recipe serves and builds. setup.sh reads it; serve.sh takes the same paths from the environment.
+
+[model]
+repo = "Zyphra/ZONOS3-Mini"                         # the release as published (Apache-2.0); nothing is converted
+revision = "d2d142a86b1e6aeb4252679673c86ecd86177bf8"
+
+[engine]
+repo = "https://github.com/BobClawblaw/TensorFold.git"
+branch = "zonos3"                                   # upstream draft PR ashhart/TensorFold#3720
+sha = "83f82199358bceb337337051a2231ad82c6339e9"
+zig = "0.17.0"
+sm = "120"
