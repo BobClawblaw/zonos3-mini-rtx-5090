@@ -34,9 +34,9 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 
 ## Speed
 
-One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe
-harness's `speech` and `speech-normalize` plans. Each case was asked once, then three times whole and three times streamed. An idle second
-server (this recipe's previous pin) held 4.3 GB of the same card during the run.
+One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe harness's
+`speech` and `speech-normalize` plans. Each case was asked once, then three times whole and three times streamed. An
+idle second server (this recipe's previous pin) held 4.3 GB of the same card during the run.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
@@ -49,9 +49,10 @@ server (this recipe's previous pin) held 4.3 GB of the same card during the run.
   the whole reply's.
 - **Encoded replies:** the long passage as MP3 took 0.75 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
   equal bytes. AAC is not in the plan; it was checked by hand on the previous pin.
-- **Text normalization** (the `speech-normalize` plan): six written sentences (three English, one each German, Portuguese and Japanese, from the
-  normalizer's own test cases) each gave the same bytes as their expected spoken form sent with normalization off
-  ("In 1990, he moved." as "In nineteen ninety, he moved."), and other bytes than the written text spoken as typed.
+- **Text normalization** (the `speech-normalize` plan): six written sentences (three English, one each German,
+  Portuguese and Japanese, from the normalizer's own test cases) each gave the same bytes as their expected spoken form
+  sent with normalization off ("In 1990, he moved." as "In nineteen ninety, he moved."), and other bytes than the
+  written text spoken as typed.
 - **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
   first request with a clip also loads the clip encoder: 8.6 s here.
 - **A busy server refuses.** Of three requests sent together, one was spoken (the same bytes as alone) and two got 503.
@@ -171,7 +172,8 @@ request while one is spoken gets 503.
 ## Checking it again
 
 The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech` and
-`speech-normalize` plans against the `zonos3-mini-5090` target; the run's files and the spoken replies are in `evidence/`.
+`speech-normalize` plans against the `zonos3-mini-5090` target; the run's files and the spoken replies are in
+`evidence/`.
 
 ```sh
 git clone https://github.com/BobClawblaw/recipe-harness && cd recipe-harness
