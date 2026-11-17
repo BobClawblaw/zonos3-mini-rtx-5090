@@ -1,4 +1,3 @@
-models/
-engine
-logs/
-.venv/
+__pycache__/
+*.pyc
+local.toml

@@ -1,0 +1,14 @@
+# Copy to local.toml (git-ignored) and change what differs on this machine.
+[model]
+model_dir = "~/models/ZONOS3-Mini"
+
+[engine]
+tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha (made by `build` if it is missing)
+# tensorfold_sha = "..."                 # another engine commit than recipe.toml's pin
+zig = "~/tools/zig-0.17.0/zig"
+nvcc = "/usr/local/cuda/bin/nvcc"
+
+[local]
+host = "127.0.0.1"
+port = 30117
+page_port = 30118

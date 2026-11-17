@@ -1,12 +1,31 @@
-# What this recipe serves and builds. setup.sh reads it; serve.sh takes the same paths from the environment.
+# The recipe's defaults. `local.toml` next to this file overrides them for one machine (copy local.example.toml); an
+# environment variable of the same name in upper case overrides both (PORT=30200 python3 -m rtx up).
 
 [model]
-repo = "Zyphra/ZONOS3-Mini"                         # the release as published (Apache-2.0); nothing is converted
-revision = "d2d142a86b1e6aeb4252679673c86ecd86177bf8"
+# Zyphra's release as published (Apache-2.0; nothing is converted). `python3 -m rtx fetch` downloads the 15 GB the
+# server reads: hf download <model_repo> --revision <model_revision> --local-dir <model_dir> --include ...
+model_repo = "Zyphra/ZONOS3-Mini"
+model_revision = "d2d142a86b1e6aeb4252679673c86ecd86177bf8"
+served_name = "zonos3-mini"
+model_dir = "~/models/ZONOS3-Mini"
 
 [engine]
-repo = "https://github.com/BobClawblaw/TensorFold.git"
-branch = "zonos3"                                   # upstream draft PR ashhart/TensorFold#3720
-sha = "83f82199358bceb337337051a2231ad82c6339e9"
-zig = "0.17.0"
-sm = "120"
+# TensorFold's native CUDA engine with the zonos3 family and the encoded reply formats: a worktree of tensorfold_src
+# at tensorfold_sha, built by `python3 -m rtx build` under tf_cache; `binary` names a built tensorfold-native instead
+tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha (made by `build` if it is missing)
+tensorfold_sha = "9757d23783eb6d34795bbd21d03a7429f8e5f0e5"   # tag zonos3-openai-9757d2378 (engine.py fetches it)
+zig = "zig"                              # Zig 0.17.0
+nvcc = "/usr/local/cuda/bin/nvcc"        # CUDA 13
+sm = "120"                               # the card's architecture: 120 is the RTX 50 series, the only one run
+binary = ""
+
+[local]
+host = "127.0.0.1"        # 0.0.0.0 serves the LAN; set api_key then
+port = 30117              # the API: /v1/audio/speech, /v1/voices, /v1/models
+page_port = 30118         # the browser test page (0: no page)
+page_bind = "127.0.0.1"   # 0.0.0.0 lets other machines open the page, which has no password
+tf_cache = "~/.cache/zonos3-mini"
+
+[serve]
+api_key = ""
+extra_args = ""
