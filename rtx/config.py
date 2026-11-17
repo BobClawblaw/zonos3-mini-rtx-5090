@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parent.parent
 INCLUDE = ("lm/*", "autoencoder/*", "registries/*", "gguf/voices/*", "speaker_encoders/*", "README.md")
 NEEDED = ("lm/zonos3_mini/model.pth", "autoencoder/generator.pt", "autoencoder/teacher/model.safetensors", "gguf/voices")
 # device memory measured on an RTX 5090: after load, and once a request with a clip has loaded the clip encoder
-LOAD_GIB = 3.83e9 / 2**30
-CLONE_GIB = 9.47e9 / 2**30
+# the engine's own device bytes: the load at one request at once, each request at once past it, the clip encoder
+LOAD_BYTES = 3_828_406_528
+LANE_BYTES = 1_236_862_976
+CLIP_BYTES = 5_643_510_688
 # the libraries the server loads when a reply is first asked in their format:
 # (format, library, the variable that names its file instead, Debian package)
 CODECS = (("mp3", "mp3lame", "TENSORFOLD_LIBMP3LAME", "libmp3lame0"), ("opus", "opus", "TENSORFOLD_LIBOPUS", "libopus0"),
@@ -44,6 +46,7 @@ class Settings:
     page_port: int = 30118
     page_bind: str = "127.0.0.1"
     tf_cache: str = "~/.cache/zonos3-mini"
+    parallel: int = 4
     api_key: str = ""
     extra_args: str = ""
 
@@ -70,6 +73,16 @@ class Settings:
     @property
     def run_binary(self) -> Path:
         return self.path(self.binary) if self.binary else self.built_binary
+
+    @property
+    def load_gib(self) -> float:
+        """Device memory the server takes when it starts."""
+        return (LOAD_BYTES + (self.parallel - 1) * LANE_BYTES) / 2**30
+
+    @property
+    def clone_gib(self) -> float:
+        """Device memory once a request with a clip has loaded the clip encoder."""
+        return self.load_gib + CLIP_BYTES / 2**30
 
     @property
     def textnorm_src(self) -> Path:
@@ -115,7 +128,7 @@ class Settings:
 
     def serve_args(self) -> list[str]:
         a = [str(self.run_binary), "serve", str(self.model), "--name", self.served_name, "--host", self.host, "--port", str(self.port),
-             "--parallel", "1", "--no-update-check"]
+             "--parallel", str(self.parallel), "--no-update-check"]
         if self.api_key:
             a += ["--api-key", self.api_key]
         return a + self.extra_args.split()
@@ -164,6 +177,8 @@ def validate(s: Settings) -> list[str]:
         out.append(f"no engine binary at {s.run_binary}: python3 -m rtx build")
     if s.page_port and not s.binary and s.built_binary.exists() and not s.page_script.exists():
         out.append(f"no test page at {s.page_script}: the pinned engine should hold it")
+    if not 1 <= s.parallel <= 16:
+        out.append(f"parallel = {s.parallel}: the server takes 1 to 16 requests at once")
     if s.host not in ("127.0.0.1", "localhost") and not s.api_key:
         out.append(f"host {s.host} serves other machines without an api_key: set one, or host = \"127.0.0.1\"")
     return out

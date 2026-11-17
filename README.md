@@ -7,7 +7,7 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
 
 - **Nothing is converted.** The server reads the release folder as downloaded, pinned to revision `d2d142a8`.
 - **The engine is a branch under review**, not a TensorFold release (see "The engine").
-- **One request at a time.** A request that arrives while another is being spoken gets 503.
+- **Four requests at once** (`parallel` in `recipe.toml`, 1 to 16). They share the card's speed; a fifth gets 503.
 - **No quality suite was run on this build.** The figures below are speed, repeatability and four transcribed
   sentences.
 
@@ -29,7 +29,7 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   second, malformed reference codes, an empty input, `top_k` out of range, an unknown `language`, a condition name or
   bucket the model does not have, a negative guidance scale.
 
-Not served: more than one request at a time, steering controls and their guidance, speech editing, accent
+Not served: steering controls and their guidance, speech editing, accent
 adapters, phoneme, start and pause tokens, and the release's `full_mr` decoder (the server uses `keep2_plain`, the
 reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
 
@@ -40,18 +40,19 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 ## Speed
 
 One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe harness's
-`speech`, `speech-normalize` and `speech-controls` plans. Each case was asked once, then three times whole and three
-times streamed. An idle second server (this recipe's previous pin) held 4.3 GB of the same card during the runs.
+`speech`, `speech-normalize`, `speech-controls` and `speech-concurrent` plans, the server started for four requests at
+once. Each case was asked once, then three times whole and three times streamed. An idle second server (this recipe's
+previous pin) held 4.3 GB of the same card during the runs.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
 | A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.2 | 0.04 s, 0.62 to 0.63 s |
-| A short sentence, the default voice | 4.13 s | 0.16 s | 26.5 | 0.03 to 0.04 s, 0.16 s |
+| A short sentence, the default voice | 4.13 s | 0.16 s | 26.3 | 0.03 to 0.04 s, 0.16 s |
 | A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.03 to 0.04 s, 0.19 to 0.20 s |
 | A voice cloned from the short reply | 5.13 s | 0.70 s | 7.4 | 0.54 to 0.55 s, 0.70 to 0.71 s |
-| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.20 s | 26.9 | 0.03 to 0.04 s, 0.20 to 0.21 s |
-| The same with speaker guidance 1.5 | 5.27 s | 0.29 s | 18.0 | 0.05 s, 0.30 s |
-| The same at `speaking_rate` 8 | 6.40 s | 0.23 s | 27.6 | 0.03 to 0.04 s, 0.24 s |
+| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.20 s | 27.0 | 0.03 to 0.04 s, 0.20 to 0.21 s |
+| The same with speaker guidance 1.5 | 5.27 s | 0.30 s | 17.9 | 0.05 s, 0.30 s |
+| The same at `speaking_rate` 8 | 6.40 s | 0.23 to 0.24 s | 27.5 | 0.03 to 0.04 s, 0.24 s |
 | The same at `speaking_rate` 25 | 3.40 s | 0.14 s | 25.2 | 0.03 to 0.04 s, 0.14 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
@@ -67,21 +68,43 @@ times streamed. An idle second server (this recipe's previous pin) held 4.3 GB o
   other bytes. Guidance costs about half again the time here (18.0 against 26.9 times real time). A negative
   guidance scale, an unknown condition name, a bucket past its table and a value that is not a number each got 400.
 - **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 8.7 s here.
-- **A busy server refuses.** Of three requests sent together, one was spoken (the same bytes as alone) and two got 503.
+  first request with a clip also loads the clip encoder: 8.8 s here.
+- **Three requests sent together** were all spoken, each the bytes the request gives alone.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
   `speaker_reference_codes` and an empty input each got 400, and so did an unknown `language` in the second plan.
 - **Intelligibility:** Whisper large-v3-turbo (`tools/asr.py`) transcribed the four replies of the `speech` plan with
   word error rate 0, and so the plain, guided and slow replies of `speech-controls`; the reply at `speaking_rate` 25
-  scored 0.059 (one word of 17). That is a handful of English sentences, not a quality evaluation: no listening test,
-  and no comparison of voices against the publisher's own server.
+  scored 0.059 (one word of 17), and in `speech-concurrent` the sentence with "$5" and "3 days" at `speaking_rate` 9
+  scored 0.111 (one word of nine) while its other five replies scored 0. That is a handful of English sentences, not a
+  quality evaluation: no listening test, and no comparison of voices against the publisher's own server.
+
+### Several at once
+
+The `speech-concurrent` plan asks six kinds of request alone (the long passage, a short one, a guided one, one with a
+speaking rate and normalized text, a cloned voice, a guided clone), then sends mixes of them together. All 18 replies
+in the five mixes equalled the same request's reply alone, byte for byte.
+
+| Sent together | Audio in all | Until the last reply | Times real time in all |
+|---|---:|---:|---:|
+| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 1.23 s | 26.1 |
+| A clone, a guided clone, the long passage, the short one | 29.7 s | 2.13 s | 14.0 |
+| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.83 s | 9.9 |
+| The long passage four times | 71.2 s | 2.41 s | 29.5 |
+| The long passage twice | 35.6 s | 1.21 s | 29.4 |
+
+- **The requests share one request's speed.** Four copies of the long passage finish in four times the 0.61 s one
+  takes alone. The engine gives each request a turn, a frame at a time; nothing is batched across requests yet.
+- **A clip is encoded in one go**, about half a second during which the other requests wait: the mixes with clones
+  are the slow ones.
+- **Six at once:** four were spoken, each the bytes it gives alone, and two got 503.
 
 ## Memory
 
-The engine's own count of device memory: 3,828,406,528 bytes after load, and 9,471,917,216 once a request with a clip
-has loaded the clip encoder (`nvidia-smi` showed 4,282 MiB and 10,092 MiB on the previous pin's run, alone on the
-card; this run's `nvidia-smi` lines in `evidence/` include the second server). A card needs about 4.5 GiB free to
-speak and about 10.5 GiB to clone.
+The engine's own count of device memory, at the recipe's four requests at once: 7,538,995,456 bytes after load, and
+13,215,247,520 once a request with a clip has loaded the clip encoder and guided requests have made their second
+lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,828,406,528 and
+`parallel = 8` in 12,486,447,360. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
+card. At four at once a card needs about 7.5 GiB free to speak and about 13 GiB to clone; at one, about 4.5 and 10.5.
 
 `python3 -m rtx up` checks that the card has room for the load before it starts, and says so when there is not
 enough left for cloning.
@@ -89,15 +112,16 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `9b118f77a`, kept as
-the tag `zonos3-openai-9b118f77a` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-four changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `14a3ccb34`, kept as
+the tag `zonos3-openai-14a3ccb34` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+five changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
 - text normalization (`docs/recipes/zonos3-mini.md` in the pinned commit, "Text normalization");
 - condition values and speaker guidance (the same page, "Condition values and speaker guidance"): greedy frames
-  equal to the publisher's code for both.
+  equal to the publisher's code for both;
+- several requests at once (the same page, "Requests at once").
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -143,7 +167,8 @@ normalizer's grammar and `--as-typed` turns normalization off; `--rate 10` and `
 and `--guidance 1.5` the speaker guidance scale. Other commands: `status`,
 `logs`, `voices`, `command` (prints the serve command) and `systemd` (writes a systemd user unit that keeps
 `up --foreground` running; enabling it is left to you). Settings live in `recipe.toml`; `local.toml` and upper-case
-environment variables override them (`PORT=30200 python3 -m rtx up`). To serve other machines set `host = "0.0.0.0"`
+environment variables override them (`PORT=30200 python3 -m rtx up`). `parallel` is how many requests are spoken at
+once (4 here; each one past the first takes 1.2 GiB more of the card). To serve other machines set `host = "0.0.0.0"`
 and an `api_key`. The test page sends no key, so with an `api_key` it lists nothing and cannot speak: set
 `page_port = 0` then. `page_bind = "0.0.0.0"` opens the page to other machines, with no password.
 
@@ -185,14 +210,14 @@ speech engine will not call any server until a key is in its environment. Put a 
 OpenAI's `speed` is refused; the model's own control is `condition_values.speaking_rate`, which Hermes does not send.
 
 What differs from OpenAI's own service: a request without `response_format` gets WAV, not MP3; raw PCM is 44,100 Hz,
-not 24,000, and says so in the reply's `X-Audio-Sample-Rate` header; `speed` and `instructions` are refused; a second
-request while one is spoken gets 503.
+not 24,000, and says so in the reply's `X-Audio-Sample-Rate` header; `speed` and `instructions` are refused; a request
+past the server's `parallel` gets 503.
 
 ## Checking it again
 
-The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech`, `speech-normalize`
-and `speech-controls` plans against the `zonos3-mini-5090` target; the run's files and the spoken replies are in
-`evidence/`.
+The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech`,
+`speech-normalize`, `speech-controls` and `speech-concurrent` plans against the `zonos3-mini-5090` target; the runs'
+files and the spoken replies are in `evidence/`.
 
 ```sh
 git clone https://github.com/BobClawblaw/recipe-harness && cd recipe-harness
@@ -200,6 +225,7 @@ cp targets/zonos3-mini-5090.local.example.toml targets/zonos3-mini-5090.local.to
 python3 -m harness run zonos3-mini-5090 --plan speech
 python3 -m harness run zonos3-mini-5090 --plan speech-normalize
 python3 -m harness run zonos3-mini-5090 --plan speech-controls
+python3 -m harness run zonos3-mini-5090 --plan speech-concurrent
 ```
 
 Each plan starts its own server, so `python3 -m rtx down` first. The word error rate needs `tools/asr.py`'s packages

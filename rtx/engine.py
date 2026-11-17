@@ -11,7 +11,7 @@ from .config import INCLUDE, TEXTNORM_REPO, TEXTNORM_RUST, TEXTNORM_SHA, Setting
 
 # where tensorfold_sha lives until the family reaches TensorFold's main: a tag, since the PR branch is rebased
 TENSORFOLD_REPO = "https://github.com/BobClawblaw/TensorFold"
-TENSORFOLD_REF = "refs/tags/zonos3-openai-9b118f77a"
+TENSORFOLD_REF = "refs/tags/zonos3-openai-14a3ccb34"
 
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:

@@ -10,7 +10,7 @@ import time
 import urllib.error
 import urllib.request
 
-from .config import CLONE_GIB, LOAD_GIB, Settings, missing_codecs
+from .config import Settings, missing_codecs
 
 EXT = {"wav": "wav", "mp3": "mp3", "ogg": "opus", "opus": "opus", "flac": "flac", "aac": "aac", "pcm": "pcm"}
 
@@ -54,10 +54,11 @@ def memory_check(s: Settings) -> None:
     have = free_gib()
     if have is None:
         return
-    if have < LOAD_GIB + 0.5:
-        raise SystemExit(f"{have:.1f} GiB free on the card, the server needs {LOAD_GIB + 0.5:.1f}: stop other models first")
-    if have < CLONE_GIB + 0.5:
-        print(f"note: {have:.1f} GiB free on the card; a request with ref_audio needs {CLONE_GIB + 0.5:.1f} in all and will be refused")
+    if have < s.load_gib + 0.5:
+        raise SystemExit(f"{have:.1f} GiB free on the card, the server needs {s.load_gib + 0.5:.1f} at parallel = {s.parallel}: "
+                         "stop other models first, or lower parallel")
+    if have < s.clone_gib + 0.5:
+        print(f"note: {have:.1f} GiB free on the card; a request with ref_audio needs {s.clone_gib + 0.5:.1f} in all and will be refused")
 
 
 def wait_ready(s: Settings, proc: subprocess.Popen, limit: float = 300) -> None:

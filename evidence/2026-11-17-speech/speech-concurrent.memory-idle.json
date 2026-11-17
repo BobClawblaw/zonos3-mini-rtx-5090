@@ -1,0 +1,12 @@
+{
+ "gpu": {
+  "output": "12145 MiB, 32607 MiB",
+  "available_gib": null,
+  "exit": 0
+ },
+ "engine": {
+  "output": "{\"schema_version\": 1, \"context_window\": 4096, \"context_fitted\": false, \"device\": {\"active_bytes\": 7538995456, \"cache_bytes\": 0, \"peak_bytes\": 7538995456, \"peak_scope\": \"since_start_or_health_reset\"}}",
+  "available_gib": null,
+  "exit": 0
+ }
+}
