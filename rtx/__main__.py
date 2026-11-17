@@ -28,6 +28,9 @@ def main(argv: list[str] | None = None) -> int:
     say.add_argument("--ref", default="", help="a WAV clip whose voice to clone")
     say.add_argument("--language", default="", help="the text normalizer's grammar: en_us (the default), fr_fr, de, ja, ...")
     say.add_argument("--as-typed", action="store_true", help="no text normalization: speak the text as typed")
+    say.add_argument("--rate", type=float, help="speaking rate, in UTF-8 bytes of text a second (about 6 to 30; slower is lower)")
+    say.add_argument("--loudness", type=float, help="loudness in LUFS (about -30 to -16)")
+    say.add_argument("--guidance", type=float, help="speaker guidance scale: 1 is off, above 1 follows the voice harder")
     sub.add_parser("voices", help="the running server's voice names")
     sub.add_parser("validate", help="check the settings, the release and the build without starting anything")
     sub.add_parser("systemd", help="write the systemd user unit (not enabled) that keeps `up --foreground` running")
@@ -52,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     elif a.cmd == "command":
         print(shlex.join(s.serve_args()))
     elif a.cmd == "say":
-        print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref, a.language, a.as_typed))
+        print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref, a.language, a.as_typed, a.rate, a.loudness, a.guidance))
     elif a.cmd == "voices":
         print(serve.voices(s))
     elif a.cmd == "validate":

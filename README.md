@@ -19,12 +19,17 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
 - Numbers, dates and currency rewritten into words before they are spoken ("$5" is said "five dollars"), by the
   publisher's own normalizer. `language` picks its grammar (`en_us` by default, 44 codes such as `en_gb`, `fr_fr`,
   `de`, `ja`, `cmn`); `"text_normalization": false` speaks the text as typed.
+- Speaking rate, loudness and bandwidth through the model's condition rows: `"condition_values": {"speaking_rate":
+  10}` (UTF-8 bytes of text a second, about 6 to 30), `loudness` (LUFS) and `fmax` (Hz), or `condition_buckets` by
+  bucket id. `speaker_cfg_scale` is speaker guidance: 1 is off, above 1 follows the voice harder, at twice the
+  model's work a frame.
 - Sampling fields `temperature`, `top_p`, `top_k` (1 to 4096) and `seed`. A seeded request gives the same bytes every
   time, in every format.
-- Refusals with a message naming the problem: an unknown voice, a clip that is not a WAV file or is shorter than half
-  a second, malformed reference codes, an empty input, `top_k` out of range, an unknown `language`.
+- Refusals with a message naming the problem: an unknown voice, a clip that is not a WAV file or is shorter than half a
+  second, malformed reference codes, an empty input, `top_k` out of range, an unknown `language`, a condition name or
+  bucket the model does not have, a negative guidance scale.
 
-Not served: more than one request at a time, speaker and control guidance, condition values, speech editing, accent
+Not served: more than one request at a time, steering controls and their guidance, speech editing, accent
 adapters, phoneme, start and pause tokens, and the release's `full_mr` decoder (the server uses `keep2_plain`, the
 reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
 
@@ -35,32 +40,41 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 ## Speed
 
 One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe harness's
-`speech` and `speech-normalize` plans. Each case was asked once, then three times whole and three times streamed. An
-idle second server (this recipe's previous pin) held 4.3 GB of the same card during the run.
+`speech`, `speech-normalize` and `speech-controls` plans. Each case was asked once, then three times whole and three
+times streamed. An idle second server (this recipe's previous pin) held 4.3 GB of the same card during the runs.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
-| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.3 | 0.04 s, 0.62 s |
-| A short sentence, the default voice | 4.13 s | 0.16 s | 26.3 | 0.03 to 0.04 s, 0.16 s |
+| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.2 | 0.04 s, 0.62 to 0.63 s |
+| A short sentence, the default voice | 4.13 s | 0.16 s | 26.5 | 0.03 to 0.04 s, 0.16 s |
 | A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.03 to 0.04 s, 0.19 to 0.20 s |
-| A voice cloned from the short reply | 5.13 s | 0.69 to 0.70 s | 7.4 | 0.54 s, 0.69 to 0.70 s |
+| A voice cloned from the short reply | 5.13 s | 0.70 s | 7.4 | 0.54 to 0.55 s, 0.70 to 0.71 s |
+| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.20 s | 26.9 | 0.03 to 0.04 s, 0.20 to 0.21 s |
+| The same with speaker guidance 1.5 | 5.27 s | 0.29 s | 18.0 | 0.05 s, 0.30 s |
+| The same at `speaking_rate` 8 | 6.40 s | 0.23 s | 27.6 | 0.03 to 0.04 s, 0.24 s |
+| The same at `speaking_rate` 25 | 3.40 s | 0.14 s | 25.2 | 0.03 to 0.04 s, 0.14 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
   the whole reply's.
-- **Encoded replies:** the long passage as MP3 took 0.75 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
+- **Encoded replies:** the long passage as MP3 took 0.76 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
   equal bytes. AAC is not in the plan; it was checked by hand on the previous pin.
 - **Text normalization** (the `speech-normalize` plan): six written sentences (three English, one each German,
   Portuguese and Japanese, from the normalizer's own test cases) each gave the same bytes as their expected spoken form
   sent with normalization off ("In 1990, he moved." as "In nineteen ninety, he moved."), and other bytes than the
   written text spoken as typed.
+- **Condition values and guidance** (the `speech-controls` plan): raw values gave the bytes of the buckets they
+  resolve to, all-unknown buckets and guidance 1 gave the bytes of a request without them, and guidance 1.5 gave
+  other bytes. Guidance costs about half again the time here (18.0 against 26.9 times real time). A negative
+  guidance scale, an unknown condition name, a bucket past its table and a value that is not a number each got 400.
 - **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 8.6 s here.
+  first request with a clip also loads the clip encoder: 8.7 s here.
 - **A busy server refuses.** Of three requests sent together, one was spoken (the same bytes as alone) and two got 503.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
   `speaker_reference_codes` and an empty input each got 400, and so did an unknown `language` in the second plan.
-- **Intelligibility:** Whisper large-v3-turbo (`tools/asr.py`) transcribed all four replies with word error rate 0.
-  That is four English sentences, not a quality evaluation: no listening test, and no comparison of voices against
-  the publisher's own server.
+- **Intelligibility:** Whisper large-v3-turbo (`tools/asr.py`) transcribed the four replies of the `speech` plan with
+  word error rate 0, and so the plain, guided and slow replies of `speech-controls`; the reply at `speaking_rate` 25
+  scored 0.059 (one word of 17). That is a handful of English sentences, not a quality evaluation: no listening test,
+  and no comparison of voices against the publisher's own server.
 
 ## Memory
 
@@ -75,13 +89,15 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `2a4379862`, kept as
-the tag `zonos3-openai-2a4379862` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-three changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `9b118f77a`, kept as
+the tag `zonos3-openai-9b118f77a` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+four changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
-- text normalization (`docs/recipes/zonos3-mini.md` in the pinned commit, "Text normalization").
+- text normalization (`docs/recipes/zonos3-mini.md` in the pinned commit, "Text normalization");
+- condition values and speaker guidance (the same page, "Condition values and speaker guidance"): greedy frames
+  equal to the publisher's code for both.
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -123,7 +139,8 @@ python3 -m rtx down
 ```
 
 `say` picks the format from the file's extension (`.wav .mp3 .ogg .flac .aac .pcm`); `--language de` names the
-normalizer's grammar and `--as-typed` turns normalization off. Other commands: `status`,
+normalizer's grammar and `--as-typed` turns normalization off; `--rate 10` and `--loudness -20` set condition values
+and `--guidance 1.5` the speaker guidance scale. Other commands: `status`,
 `logs`, `voices`, `command` (prints the serve command) and `systemd` (writes a systemd user unit that keeps
 `up --foreground` running; enabling it is left to you). Settings live in `recipe.toml`; `local.toml` and upper-case
 environment variables override them (`PORT=30200 python3 -m rtx up`). To serve other machines set `host = "0.0.0.0"`
@@ -165,14 +182,16 @@ speech engine will not call any server until a key is in its environment. Put a 
 (`VOICE_TOOLS_OPENAI_KEY=local`), restart it, and pick Settings → Voice → TTS Engine → OpenAI. It accepts a plain
 `http` base URL only for `localhost` or `127.0.0.1`, so the web UI has to run on the machine that serves the model.
 
+OpenAI's `speed` is refused; the model's own control is `condition_values.speaking_rate`, which Hermes does not send.
+
 What differs from OpenAI's own service: a request without `response_format` gets WAV, not MP3; raw PCM is 44,100 Hz,
 not 24,000, and says so in the reply's `X-Audio-Sample-Rate` header; `speed` and `instructions` are refused; a second
 request while one is spoken gets 503.
 
 ## Checking it again
 
-The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech` and
-`speech-normalize` plans against the `zonos3-mini-5090` target; the run's files and the spoken replies are in
+The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech`, `speech-normalize`
+and `speech-controls` plans against the `zonos3-mini-5090` target; the run's files and the spoken replies are in
 `evidence/`.
 
 ```sh
@@ -180,6 +199,7 @@ git clone https://github.com/BobClawblaw/recipe-harness && cd recipe-harness
 cp targets/zonos3-mini-5090.local.example.toml targets/zonos3-mini-5090.local.toml   # the engine, the release, asr
 python3 -m harness run zonos3-mini-5090 --plan speech
 python3 -m harness run zonos3-mini-5090 --plan speech-normalize
+python3 -m harness run zonos3-mini-5090 --plan speech-controls
 ```
 
 Each plan starts its own server, so `python3 -m rtx down` first. The word error rate needs `tools/asr.py`'s packages

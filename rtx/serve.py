@@ -157,9 +157,10 @@ def status(s: Settings) -> str:
 
 
 def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = None, ref: str = "", language: str = "",
-        as_typed: bool = False) -> str:
+        as_typed: bool = False, rate: float | None = None, loudness: float | None = None, guidance: float | None = None) -> str:
     """`text` spoken by the running server into `out`, whose extension picks the format; `ref` is a WAV clip to clone,
-    `language` the normalizer's grammar, `as_typed` turns normalization off."""
+    `language` the normalizer's grammar, `as_typed` turns normalization off; `rate` (UTF-8 bytes of text a second)
+    and `loudness` (LUFS) are condition values, `guidance` the speaker guidance scale."""
     fmt = EXT.get(out.rsplit(".", 1)[-1].lower())
     if fmt is None:
         raise SystemExit(f"{out}: the extension must be one of {', '.join(sorted(EXT))}")
@@ -172,6 +173,11 @@ def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = No
         body["language"] = language
     if as_typed:
         body["text_normalization"] = False
+    values = {k: v for k, v in (("speaking_rate", rate), ("loudness", loudness)) if v is not None}
+    if values:
+        body["condition_values"] = values
+    if guidance is not None:
+        body["speaker_cfg_scale"] = guidance
     if ref:
         body["ref_audio"] = base64.b64encode(open(ref, "rb").read()).decode()
     headers = {"content-type": "application/json", **({"authorization": f"Bearer {s.api_key}"} if s.api_key else {})}
