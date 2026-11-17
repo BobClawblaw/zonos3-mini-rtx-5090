@@ -1,6 +1,7 @@
 """The engine: a worktree of the TensorFold checkout at the pinned commit, built under tf_cache (never in the
 checkout). The family needs no libtfgrammar: it speaks, with no tools or schemas."""
 
+import os
 import re
 import shutil
 import subprocess
@@ -71,7 +72,13 @@ def textnorm(s: Settings, rebuild: bool = False) -> Path | None:
         src.parent.mkdir(parents=True, exist_ok=True)
         _run(["git", "clone", TEXTNORM_REPO, str(src)])
     _run(["git", "-C", str(src), "checkout", "--detach", TEXTNORM_SHA])
-    _run([cargo, "rustc", "--release", "--locked", "--lib", "-p", "zyphra-textnorm", "--features", "capi", "--crate-type", "cdylib"], cwd=src)
+    cmd = [cargo, "rustc", "--release", "--locked", "--lib", "-p", "zyphra-textnorm", "--features", "capi", "--crate-type", "cdylib"]
+    print("+", " ".join(cmd), flush=True)
+    # a cargo named by its path runs the rustc beside it, not an older one earlier on PATH
+    env = {**os.environ, "PATH": os.path.dirname(cargo) + os.pathsep + os.environ.get("PATH", "")} if "/" in cargo else None
+    if subprocess.run(cmd, cwd=src, env=env).returncode != 0:
+        print("note: the text normalizer did not build (see above); numbers, dates and currency are spoken as typed until it does.")
+        return None
     s.textnorm_lib.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src / "target" / "release" / "libzyphra_textnorm.so", s.textnorm_lib)
     return s.textnorm_lib
