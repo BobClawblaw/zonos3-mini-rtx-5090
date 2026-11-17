@@ -56,14 +56,27 @@ Needs an NVIDIA card with about 11 GB free (measured on a 5090 only), CUDA 13 wi
 command, and about 15 GB of disk for the release.
 
     ./setup.sh        # downloads the release at its pin, checks out the engine at its pin, builds it for sm_120
-    ./serve.sh        # serves on 127.0.0.1:30117
+    ./run.sh          # the server and its test page, in this terminal; Ctrl-C stops both
 
-`recipe.toml` holds the pins; `serve.sh`'s header lists its settings (`PORT`, `HOST`, `NAME`). For another card,
-change `sm` in `recipe.toml`; only sm_120 was run.
+Then open `http://127.0.0.1:30118/`: the test page lists the voices, speaks what you type with a seed and the
+sampling fields, keeps each take with a player and its timing, and clones a voice from an audio file you pick. The
+API is on `http://127.0.0.1:30117/v1`.
+
+- **From another machine:** `UI_BIND=0.0.0.0 ./run.sh` lets other machines open the page on port 30118. The page has
+  no password, so do that only on a network you trust.
+- **Other ports:** `PORT=... UI_PORT=... ./run.sh`.
+- **The API alone:** `./serve.sh` (its header lists `PORT`, `HOST`, `NAME`).
+- **As a service, if you want one:** `./service.sh install` keeps `run.sh` running as a systemd user service (no
+  root; it starts at login and restarts on failure), and `./service.sh remove` takes it out again.
+
+`recipe.toml` holds the pins. For another card, change `sm` in `recipe.toml`; only sm_120 was run. The page ships
+with the engine (`tools/zig/zonos3_test_page.py`, standard library only). It was loaded in headless Chromium, where
+it listed the voices without a script error, and its routes were exercised with curl; its buttons were not clicked
+by an automated test.
 
 ## Speaking
 
-A voice from the release (`curl -s 127.0.0.1:30117/v1/voices` lists them):
+The same server from the command line. A voice from the release (`curl -s 127.0.0.1:30117/v1/voices` lists them):
 
     curl -s 127.0.0.1:30117/v1/audio/speech -H 'Content-Type: application/json' \
       -d '{"model": "zonos3-mini", "input": "The harbor was quiet this morning.", "voice": "rupert", "seed": 1}' -o reply.wav
