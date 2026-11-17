@@ -140,8 +140,9 @@ tts:
 
 Checked with Hermes's own code against this server: its speech tool wrote MP3 and Ogg Opus files of the text it was
 given, also with no `voice` set (Hermes then sends `alloy`, which speaks in the default voice), and its streaming
-client received raw PCM and took the 44,100 Hz rate from the reply's header. Hermes was not run as a whole agent or
-through a chat platform here.
+client received raw PCM and took the 44,100 Hz rate from the reply's header. Run as a whole agent from its command
+line, Hermes called the speech tool itself and wrote an MP3 of the sentence it was asked to say. A voice reply to a
+message arriving through a chat platform was not checked.
 
 The [Hermes web UI](https://github.com/nesquena/hermes-webui) reads the same `tts.openai` settings, but its OpenAI
 speech engine will not call any server until a key is in its environment. Put a placeholder in the web UI's `.env`
