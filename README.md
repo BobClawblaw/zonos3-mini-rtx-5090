@@ -143,6 +143,11 @@ given, also with no `voice` set (Hermes then sends `alloy`, which speaks in the 
 client received raw PCM and took the 44,100 Hz rate from the reply's header. Hermes was not run as a whole agent or
 through a chat platform here.
 
+The [Hermes web UI](https://github.com/nesquena/hermes-webui) reads the same `tts.openai` settings, but its OpenAI
+speech engine will not call any server until a key is in its environment. Put a placeholder in the web UI's `.env`
+(`VOICE_TOOLS_OPENAI_KEY=local`), restart it, and pick Settings → Voice → TTS Engine → OpenAI. It accepts a plain
+`http` base URL only for `localhost` or `127.0.0.1`, so the web UI has to run on the machine that serves the model.
+
 What differs from OpenAI's own service: a request without `response_format` gets WAV, not MP3; raw PCM is 44,100 Hz,
 not 24,000, and says so in the reply's `X-Audio-Sample-Rate` header; `speed` and `instructions` are refused; a second
 request while one is spoken gets 503.
