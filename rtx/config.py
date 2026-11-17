@@ -14,8 +14,10 @@ NEEDED = ("lm/zonos3_mini/model.pth", "autoencoder/generator.pt", "autoencoder/t
 # device memory measured on an RTX 5090: after load, and once a request with a clip has loaded the clip encoder
 LOAD_GIB = 3.83e9 / 2**30
 CLONE_GIB = 9.47e9 / 2**30
-# the libraries the server loads when a reply is first asked in their format: (format, library, Debian package)
-CODECS = (("mp3", "mp3lame", "libmp3lame0"), ("opus", "opus", "libopus0"), ("aac", "fdk-aac", "libfdk-aac2"))
+# the libraries the server loads when a reply is first asked in their format:
+# (format, library, the variable that names its file instead, Debian package)
+CODECS = (("mp3", "mp3lame", "TENSORFOLD_LIBMP3LAME", "libmp3lame0"), ("opus", "opus", "TENSORFOLD_LIBOPUS", "libopus0"),
+          ("aac", "fdk-aac", "TENSORFOLD_LIBFDKAAC", "libfdk-aac2"))
 
 
 @dataclass
@@ -125,8 +127,8 @@ def load(local_file: Path | None = None, env: dict[str, str] | None = None) -> S
 
 
 def missing_codecs() -> list[tuple[str, str]]:
-    """(format, package) for each encoded format whose library the loader does not find."""
-    return [(fmt, pkg) for fmt, lib, pkg in CODECS if not ctypes.util.find_library(lib)]
+    """(format, package) for each encoded format whose library neither its variable nor the loader finds."""
+    return [(fmt, pkg) for fmt, lib, var, pkg in CODECS if not (os.path.isfile(os.environ.get(var, "")) or ctypes.util.find_library(lib))]
 
 
 def validate(s: Settings) -> list[str]:
