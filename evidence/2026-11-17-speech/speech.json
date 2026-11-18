@@ -2,21 +2,21 @@
  "cases": {
   "passage": {
    "status": 200,
-   "first_request_s": 0.633,
+   "first_request_s": 0.631,
    "bytes": 1569960,
    "audio_s": 17.8,
    "whole_s": [
-    0.609,
-    0.61
+    0.611,
+    0.612
    ],
-   "times_real_time": 29.2,
+   "times_real_time": 29.1,
    "stream_first_byte_s": [
-    0.039,
-    0.041
+    0.038,
+    0.039
    ],
    "stream_s": [
-    0.619,
-    0.627
+    0.62,
+    0.621
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -28,17 +28,17 @@
    "bytes": 364560,
    "audio_s": 4.13,
    "whole_s": [
-    0.157,
-    0.159
+    0.158,
+    0.158
    ],
-   "times_real_time": 26.3,
+   "times_real_time": 26.2,
    "stream_first_byte_s": [
-    0.034,
-    0.035
+    0.033,
+    0.034
    ],
    "stream_s": [
-    0.161,
-    0.163
+    0.16,
+    0.161
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -46,7 +46,7 @@
   },
   "second-voice": {
    "status": 200,
-   "first_request_s": 0.192,
+   "first_request_s": 0.191,
    "bytes": 452760,
    "audio_s": 5.13,
    "whole_s": [
@@ -55,12 +55,12 @@
    ],
    "times_real_time": 26.9,
    "stream_first_byte_s": [
-    0.035,
-    0.035
+    0.036,
+    0.037
    ],
    "stream_s": [
-    0.195,
-    0.196
+    0.196,
+    0.198
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -68,21 +68,21 @@
   },
   "clone": {
    "status": 200,
-   "first_request_s": 8.761,
+   "first_request_s": 8.876,
    "bytes": 452760,
    "audio_s": 5.13,
    "whole_s": [
-    0.695,
-    0.697
+    0.693,
+    0.696
    ],
    "times_real_time": 7.4,
    "stream_first_byte_s": [
-    0.541,
-    0.545
+    0.537,
+    0.541
    ],
    "stream_s": [
-    0.701,
-    0.704
+    0.696,
+    0.7
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -123,21 +123,21 @@
   "mp3": {
    "status": 200,
    "bytes": 285466,
-   "s": 0.756,
+   "s": 0.761,
    "starts_as": true,
    "repeat_identical": true
   },
   "opus": {
    "status": 200,
    "bytes": 142170,
-   "s": 0.663,
+   "s": 0.665,
    "starts_as": true,
    "repeat_identical": true
   },
   "flac": {
    "status": 200,
    "bytes": 713785,
-   "s": 0.627,
+   "s": 0.626,
    "starts_as": true,
    "repeat_identical": true
   }

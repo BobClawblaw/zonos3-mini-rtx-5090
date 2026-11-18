@@ -21,8 +21,8 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   `de`, `ja`, `cmn`); `"text_normalization": false` speaks the text as typed.
 - Speaking rate, loudness and bandwidth through the model's condition rows: `"condition_values": {"speaking_rate":
   10}` (UTF-8 bytes of text a second, about 6 to 30), `loudness` (LUFS) and `fmax` (Hz), or `condition_buckets` by
-  bucket id. `speaker_cfg_scale` is speaker guidance: 1 is off, above 1 follows the voice harder, at twice the
-  model's work a frame.
+  bucket id. `speaker_cfg_scale` is speaker guidance: 1 is off, above 1 follows the voice harder, for
+  about a tenth more time.
 - Sampling fields `temperature`, `top_p`, `top_k` (1 to 4096) and `seed`. A seeded request gives the same bytes every
   time, in every format.
 - Refusals with a message naming the problem: an unknown voice, a clip that is not a WAV file or is shorter than half a
@@ -46,14 +46,14 @@ previous pin) held 4.3 GB of the same card during the runs.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
-| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.2 | 0.04 s, 0.62 to 0.63 s |
-| A short sentence, the default voice | 4.13 s | 0.16 s | 26.3 | 0.03 to 0.04 s, 0.16 s |
-| A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.03 to 0.04 s, 0.19 to 0.20 s |
-| A voice cloned from the short reply | 5.13 s | 0.70 s | 7.4 | 0.54 to 0.55 s, 0.70 to 0.71 s |
+| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.1 | 0.04 s, 0.62 s |
+| A short sentence, the default voice | 4.13 s | 0.16 s | 26.2 | 0.03 s, 0.16 s |
+| A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.04 s, 0.20 s |
+| A voice cloned from the short reply | 5.13 s | 0.69 to 0.70 s | 7.4 | 0.54 s, 0.70 s |
 | A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.20 s | 27.0 | 0.03 to 0.04 s, 0.20 to 0.21 s |
-| The same with speaker guidance 1.5 | 5.27 s | 0.30 s | 17.9 | 0.05 s, 0.30 s |
+| The same with speaker guidance 1.5 | 5.27 s | 0.22 s | 23.9 | 0.04 s, 0.22 to 0.23 s |
 | The same at `speaking_rate` 8 | 6.40 s | 0.23 to 0.24 s | 27.5 | 0.03 to 0.04 s, 0.24 s |
-| The same at `speaking_rate` 25 | 3.40 s | 0.14 s | 25.2 | 0.03 to 0.04 s, 0.14 s |
+| The same at `speaking_rate` 25 | 3.40 s | 0.14 s | 25.2 | 0.04 s, 0.14 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
   the whole reply's.
@@ -63,12 +63,13 @@ previous pin) held 4.3 GB of the same card during the runs.
   Portuguese and Japanese, from the normalizer's own test cases) each gave the same bytes as their expected spoken form
   sent with normalization off ("In 1990, he moved." as "In nineteen ninety, he moved."), and other bytes than the
   written text spoken as typed.
-- **Condition values and guidance** (the `speech-controls` plan): raw values gave the bytes of the buckets they
-  resolve to, all-unknown buckets and guidance 1 gave the bytes of a request without them, and guidance 1.5 gave
-  other bytes. Guidance costs about half again the time here (18.0 against 26.9 times real time). A negative
-  guidance scale, an unknown condition name, a bucket past its table and a value that is not a number each got 400.
+- **Condition values and guidance** (the `speech-controls` plan): raw values gave the bytes of the buckets they resolve
+  to, all-unknown buckets and guidance 1 gave the bytes of a request without them, and guidance 1.5 gave other bytes.
+  Guidance costs about a tenth more time here (23.9 against 27.0 times real time): the request's two passes a frame run
+  as one. A negative guidance scale, an unknown condition name, a bucket past its table and a value that is not a number
+  each got 400.
 - **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 8.8 s here.
+  first request with a clip also loads the clip encoder: 8.9 s here.
 - **Three requests sent together** were all spoken, each the bytes the request gives alone.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
   `speaker_reference_codes` and an empty input each got 400, and so did an unknown `language` in the second plan.
@@ -86,14 +87,15 @@ in the five mixes equalled the same request's reply alone, byte for byte.
 
 | Sent together | Audio in all | Until the last reply | Times real time in all |
 |---|---:|---:|---:|
-| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 1.23 s | 26.1 |
-| A clone, a guided clone, the long passage, the short one | 29.7 s | 2.13 s | 14.0 |
-| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.83 s | 9.9 |
-| The long passage four times | 71.2 s | 2.41 s | 29.5 |
-| The long passage twice | 35.6 s | 1.21 s | 29.4 |
+| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 0.96 s | 33.4 |
+| A clone, a guided clone, the long passage, the short one | 29.7 s | 1.93 s | 15.4 |
+| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.54 s | 11.7 |
+| The long passage four times | 71.2 s | 1.71 s | 41.7 |
+| The long passage twice | 35.6 s | 0.98 s | 36.4 |
 
-- **The requests share one request's speed.** Four copies of the long passage finish in four times the 0.61 s one
-  takes alone. The engine gives each request a turn, a frame at a time; nothing is batched across requests yet.
+- **Requests at once share part of the work.** The requests in progress advance in one pass of the model a frame,
+  so four copies of the long passage take 1.71 s, not four times the 0.61 s one takes alone. The audio decoder and
+  the sampling are still done a request at a time, and the decoder is now the larger part.
 - **A clip is encoded in one go**, about half a second during which the other requests wait: the mixes with clones
   are the slow ones.
 - **Six at once:** four were spoken, each the bytes it gives alone, and two got 503.
@@ -101,7 +103,7 @@ in the five mixes equalled the same request's reply alone, byte for byte.
 ## Memory
 
 The engine's own count of device memory, at the recipe's four requests at once: 7,538,995,456 bytes after load, and
-13,215,247,520 once a request with a clip has loaded the clip encoder and guided requests have made their second
+13,226,161,312 once a request with a clip has loaded the clip encoder and guided requests have made their second
 lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,828,406,528 and
 `parallel = 8` in 12,486,447,360. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
 card. At four at once a card needs about 7.5 GiB free to speak and about 13 GiB to clone; at one, about 4.5 and 10.5.
@@ -112,8 +114,8 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `14a3ccb34`, kept as
-the tag `zonos3-openai-14a3ccb34` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `a158fcdaf`, kept as
+the tag `zonos3-openai-a158fcdaf` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
 five changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
@@ -121,7 +123,7 @@ five changes not yet proposed upstream:
 - text normalization (`docs/recipes/zonos3-mini.md` in the pinned commit, "Text normalization");
 - condition values and speaker guidance (the same page, "Condition values and speaker guidance"): greedy frames
   equal to the publisher's code for both;
-- several requests at once (the same page, "Requests at once").
+- several requests at once, advancing in one pass of the model (the same page, "Requests at once").
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0

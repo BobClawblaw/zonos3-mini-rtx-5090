@@ -2,7 +2,7 @@
  "cases": {
   "passage": {
    "status": 200,
-   "first_request_s": 0.63,
+   "first_request_s": 0.628,
    "bytes": 1569960,
    "audio_s": 17.8,
    "whole_s": [
@@ -11,12 +11,12 @@
    ],
    "times_real_time": 29.2,
    "stream_first_byte_s": [
-    0.039,
-    0.039
+    0.04,
+    0.04
    ],
    "stream_s": [
-    0.621,
-    0.621
+    0.623,
+    0.623
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -24,21 +24,21 @@
   },
   "short": {
    "status": 200,
-   "first_request_s": 0.157,
+   "first_request_s": 0.158,
    "bytes": 364560,
    "audio_s": 4.13,
    "whole_s": [
-    0.158,
-    0.158
+    0.157,
+    0.157
    ],
-   "times_real_time": 26.2,
+   "times_real_time": 26.3,
    "stream_first_byte_s": [
-    0.033,
-    0.033
+    0.034,
+    0.034
    ],
    "stream_s": [
-    0.16,
-    0.16
+    0.161,
+    0.161
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -46,21 +46,21 @@
   },
   "guided": {
    "status": 200,
-   "first_request_s": 0.276,
+   "first_request_s": 0.205,
    "bytes": 429240,
    "audio_s": 4.87,
    "whole_s": [
-    0.276,
-    0.276
+    0.206,
+    0.206
    ],
-   "times_real_time": 17.6,
+   "times_real_time": 23.6,
    "stream_first_byte_s": [
-    0.047,
-    0.047
+    0.04,
+    0.04
    ],
    "stream_s": [
-    0.277,
-    0.277
+    0.208,
+    0.208
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -72,17 +72,17 @@
    "bytes": 476280,
    "audio_s": 5.4,
    "whole_s": [
-    0.2,
-    0.2
+    0.201,
+    0.201
    ],
-   "times_real_time": 27.0,
+   "times_real_time": 26.9,
    "stream_first_byte_s": [
     0.035,
     0.035
    ],
    "stream_s": [
-    0.205,
-    0.205
+    0.204,
+    0.204
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -90,14 +90,14 @@
   },
   "clone": {
    "status": 200,
-   "first_request_s": 9.061,
+   "first_request_s": 9.198,
    "bytes": 452760,
    "audio_s": 5.13,
    "whole_s": [
-    0.702,
-    0.702
+    0.69,
+    0.69
    ],
-   "times_real_time": 7.3,
+   "times_real_time": 7.4,
    "stream_first_byte_s": [
     0.541,
     0.541
@@ -112,21 +112,21 @@
   },
   "guided-clone": {
    "status": 200,
-   "first_request_s": 0.669,
+   "first_request_s": 0.625,
    "bytes": 235200,
    "audio_s": 2.67,
    "whole_s": [
-    0.673,
-    0.673
+    0.629,
+    0.629
    ],
-   "times_real_time": 4.0,
+   "times_real_time": 4.2,
    "stream_first_byte_s": [
-    0.556,
-    0.556
+    0.543,
+    0.543
    ],
    "stream_s": [
-    0.677,
-    0.677
+    0.631,
+    0.631
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -139,8 +139,8 @@
    200,
    200,
    200,
-   200,
    503,
+   200,
    503
   ],
   "identical": 4
@@ -161,9 +161,9 @@
    ],
    "identical": 4,
    "audio_s": 32.2,
-   "wall_s": 1.232,
-   "times_real_time": 26.1,
-   "slowest_s": 1.232
+   "wall_s": 0.964,
+   "times_real_time": 33.4,
+   "slowest_s": 0.964
   },
   {
    "cases": [
@@ -180,9 +180,9 @@
    ],
    "identical": 4,
    "audio_s": 29.73,
-   "wall_s": 2.129,
-   "times_real_time": 14.0,
-   "slowest_s": 2.127
+   "wall_s": 1.925,
+   "times_real_time": 15.4,
+   "slowest_s": 1.923
   },
   {
    "cases": [
@@ -199,9 +199,9 @@
    ],
    "identical": 4,
    "audio_s": 18.07,
-   "wall_s": 1.826,
-   "times_real_time": 9.9,
-   "slowest_s": 1.824
+   "wall_s": 1.539,
+   "times_real_time": 11.7,
+   "slowest_s": 1.537
   },
   {
    "cases": [
@@ -218,9 +218,9 @@
    ],
    "identical": 4,
    "audio_s": 71.2,
-   "wall_s": 2.413,
-   "times_real_time": 29.5,
-   "slowest_s": 2.412
+   "wall_s": 1.707,
+   "times_real_time": 41.7,
+   "slowest_s": 1.706
   },
   {
    "cases": [
@@ -233,9 +233,9 @@
    ],
    "identical": 2,
    "audio_s": 35.6,
-   "wall_s": 1.213,
-   "times_real_time": 29.4,
-   "slowest_s": 1.213
+   "wall_s": 0.978,
+   "times_real_time": 36.4,
+   "slowest_s": 0.977
   }
  ]
 }
