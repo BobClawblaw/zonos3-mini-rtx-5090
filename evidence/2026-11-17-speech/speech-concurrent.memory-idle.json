@@ -1,11 +1,11 @@
 {
  "gpu": {
-  "output": "15907 MiB, 32607 MiB",
+  "output": "15911 MiB, 32607 MiB",
   "available_gib": null,
   "exit": 0
  },
  "engine": {
-  "output": "{\"schema_version\": 1, \"context_window\": 4096, \"context_fitted\": false, \"device\": {\"active_bytes\": 7573076480, \"cache_bytes\": 0, \"peak_bytes\": 7573076480, \"peak_scope\": \"since_start_or_health_reset\"}}",
+  "output": "{\"schema_version\": 1, \"context_window\": 4096, \"context_fitted\": false, \"device\": {\"active_bytes\": 7577534976, \"cache_bytes\": 0, \"peak_bytes\": 7577534976, \"peak_scope\": \"since_start_or_health_reset\"}}",
   "available_gib": null,
   "exit": 0
  }

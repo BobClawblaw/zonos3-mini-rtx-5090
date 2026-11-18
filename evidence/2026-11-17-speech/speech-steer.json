@@ -11,11 +11,11 @@
    ],
    "times_real_time": 33.1,
    "stream_first_byte_s": [
-    0.033,
+    0.034,
     0.035
    ],
    "stream_s": [
-    0.163,
+    0.164,
     0.166
    ],
    "repeat_identical": true,
@@ -28,17 +28,17 @@
    "bytes": 488040,
    "audio_s": 5.53,
    "whole_s": [
-    0.168,
+    0.167,
     0.168
    ],
-   "times_real_time": 32.9,
+   "times_real_time": 33.1,
    "stream_first_byte_s": [
-    0.033,
+    0.034,
     0.035
    ],
    "stream_s": [
-    0.168,
-    0.17
+    0.169,
+    0.169
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -46,12 +46,12 @@
   },
   "embedding": {
    "status": 200,
-   "first_request_s": 0.142,
+   "first_request_s": 0.143,
    "bytes": 458640,
    "audio_s": 5.2,
    "whole_s": [
     0.142,
-    0.143
+    0.144
    ],
    "times_real_time": 36.6,
    "stream_first_byte_s": [
@@ -60,7 +60,7 @@
    ],
    "stream_s": [
     0.142,
-    0.144
+    0.143
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -68,21 +68,21 @@
   },
   "reshaped": {
    "status": 200,
-   "first_request_s": 0.135,
+   "first_request_s": 0.134,
    "bytes": 429240,
    "audio_s": 4.87,
    "whole_s": [
-    0.135,
-    0.136
-   ],
-   "times_real_time": 36.0,
-   "stream_first_byte_s": [
-    0.02,
-    0.021
-   ],
-   "stream_s": [
     0.134,
     0.135
+   ],
+   "times_real_time": 36.3,
+   "stream_first_byte_s": [
+    0.02,
+    0.022
+   ],
+   "stream_s": [
+    0.136,
+    0.138
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -90,12 +90,12 @@
   },
   "span": {
    "status": 200,
-   "first_request_s": 0.149,
+   "first_request_s": 0.148,
    "bytes": 464520,
    "audio_s": 5.27,
    "whole_s": [
     0.145,
-    0.146
+    0.145
    ],
    "times_real_time": 36.3,
    "stream_first_byte_s": [
@@ -104,7 +104,7 @@
    ],
    "stream_s": [
     0.145,
-    0.148
+    0.147
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -116,17 +116,17 @@
    "bytes": 441000,
    "audio_s": 5.0,
    "whole_s": [
-    0.162,
+    0.161,
     0.163
    ],
-   "times_real_time": 30.9,
+   "times_real_time": 31.1,
    "stream_first_byte_s": [
     0.025,
     0.026
    ],
    "stream_s": [
     0.161,
-    0.164
+    0.162
    ],
    "repeat_identical": true,
    "stream_identical": true,

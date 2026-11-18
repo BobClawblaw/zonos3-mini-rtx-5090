@@ -35,8 +35,15 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   `control_spans` steer a range of the text's characters, `steer_hold` and its two times set how the push eases
   off, and `controls_cfg_scale` is guidance on the controls (embedding voices). See "Steering".
 
+- LACI: `"laci": true` watches where the model is in its text as it speaks and regenerates the part where it
+  skipped words, got stuck or stopped early. A text of one or two words is spoken better by default: it is
+  generated with a filler sentence after it and cut before the filler (`"short_text": "off"` turns that off).
+  The text may hold pause markers (U+E003 to U+E006: a quarter, half, one and two seconds), a start marker
+  (or `"start_immediately": true`: speech from the first frame) and pronunciation groups in IPA. See "LACI, short
+  texts and markers".
+
 Not served: steering spans placed by the model's reading position (`control_span_follow: "reading"`), a speaker
-embedding made from a clip, speech editing, accent
+embedding made from a clip, LACI's duration targets, speech editing, accent
 adapters, phoneme, start and pause tokens, and the release's `full_mr` decoder (the server uses `keep2_plain`, the
 reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
 
@@ -47,25 +54,31 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 ## Speed
 
 One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe harness's
-`speech`, `speech-normalize`, `speech-controls`, `speech-concurrent` and `speech-steer` plans, the server started for
-four requests at once. Each case was asked once, then three times whole and three times streamed. An idle second server
+`speech`, `speech-normalize`, `speech-controls`, `speech-concurrent`, `speech-steer` and `speech-laci` plans, the server
+started for four requests at once. Each case was asked once, then three times whole and three times streamed. An idle second server
 (this recipe's previous pin) held 7.8 GiB of the same card during the runs.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
-| A long passage, voice `rupert` | 17.8 s | 0.48 s | 37.2 | 0.04 s, 0.48 s |
+| A long passage, voice `rupert` | 17.8 s | 0.48 s | 37.4 | 0.04 s, 0.48 s |
 | A short sentence, the default voice | 4.13 s | 0.13 s | 32.3 | 0.03 s, 0.13 s |
-| A second voice, `imogen` | 5.13 s | 0.15 to 0.16 s | 33.3 | 0.03 s, 0.16 s |
-| A voice cloned from the short reply | 5.13 s | 0.70 s | 7.3 | 0.58 s, 0.70 s |
-| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.16 to 0.17 s | 32.9 | 0.03 s, 0.16 to 0.17 s |
-| The same with speaker guidance 1.5 | 5.27 s | 0.18 s | 28.9 | 0.04 s, 0.18 to 0.19 s |
+| A second voice, `imogen` | 5.13 s | 0.15 s | 33.8 | 0.03 s, 0.16 s |
+| A voice cloned from the short reply | 5.13 s | 0.72 to 0.73 s | 7.1 | 0.60 to 0.61 s, 0.72 to 0.73 s |
+| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.16 s | 33.3 | 0.03 s, 0.16 to 0.17 s |
+| The same with speaker guidance 1.5 | 5.27 s | 0.18 s | 29.1 | 0.04 s, 0.18 s |
 | The same at `speaking_rate` 8 | 6.40 s | 0.19 s | 34.2 | 0.03 to 0.04 s, 0.19 s |
-| The same at `speaking_rate` 25 | 3.40 s | 0.11 s | 30.1 | 0.03 s, 0.11 to 0.12 s |
-| The sentence steered: `mood.valence` 2, `delivery.whisper` 1 (the `speech-steer` plan) | 5.53 s | 0.17 s | 32.9 | 0.03 to 0.04 s, 0.17 s |
+| The same at `speaking_rate` 25 | 3.40 s | 0.11 s | 30.1 | 0.03 to 0.04 s, 0.12 s |
+| The sentence steered: `mood.valence` 2, `delivery.whisper` 1 (the `speech-steer` plan) | 5.53 s | 0.17 s | 33.1 | 0.03 to 0.04 s, 0.17 s |
 | The sentence by `rupert`'s speaker embedding | 5.20 s | 0.14 s | 36.6 | 0.02 s, 0.14 s |
-| That voice reshaped: `identity.age` 1.5, `texture.deep` 1 | 4.87 s | 0.14 s | 36.0 | 0.02 s, 0.13 to 0.14 s |
+| That voice reshaped: `identity.age` 1.5, `texture.deep` 1 | 4.87 s | 0.13 to 0.14 s | 36.3 | 0.02 s, 0.14 s |
 | That voice with emphasis on characters 12 to 20 | 5.27 s | 0.15 s | 36.3 | 0.02 s, 0.15 s |
-| That voice with `mood.arousal` 1 and controls guidance 1.5 | 5.00 s | 0.16 s | 30.9 | 0.03 s, 0.16 s |
+| That voice with `mood.arousal` 1 and controls guidance 1.5 | 5.00 s | 0.16 s | 31.1 | 0.03 s, 0.16 s |
+| The long passage under LACI (the `speech-laci` plan) | 17.8 s | 0.48 s | 37.2 | 0.08 s, 0.48 s |
+| "Hello." as a short text | 1.07 s | 0.06 s | 19.0 | 0.06 s, 0.06 s |
+| "Hello." with `short_text` off | 0.87 s | 0.05 s | 17.0 | 0.03 s, 0.05 s |
+| A sentence with a one-second pause marker | 2.73 s | 0.10 s | 28.2 | 0.03 s, 0.10 s |
+| A sentence with `start_immediately` | 2.00 s | 0.08 s | 24.4 | 0.03 s, 0.08 s |
+| A sentence with a pronunciation group | 3.20 s | 0.11 s | 29.9 | 0.03 to 0.04 s, 0.11 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
   the whole reply's.
@@ -74,7 +87,7 @@ four requests at once. Each case was asked once, then three times whole and thre
   is streamed or not, which keeps the two equal. Replies differ from the previous pin's by one step of 16-bit audio in
   about one sample in 2,000 (338 of 784,980 in the long passage, measured by hand), and another cuBLAS release may
   round differently again: replies are byte-stable on one install, not across installs.
-- **Encoded replies:** the long passage as MP3 took 0.63 s, as Opus 0.53 s and as FLAC 0.49 s, each asked twice with
+- **Encoded replies:** the long passage as MP3 took 0.62 s, as Opus 0.53 s and as FLAC 0.49 s, each asked twice with
   equal bytes. AAC is not in the plan; it was checked by hand on the previous pin.
 - **Text normalization** (the `speech-normalize` plan): six written sentences (three English, one each German,
   Portuguese and Japanese, from the normalizer's own test cases) each gave the same bytes as their expected spoken form
@@ -82,11 +95,11 @@ four requests at once. Each case was asked once, then three times whole and thre
   written text spoken as typed.
 - **Condition values and guidance** (the `speech-controls` plan): raw values gave the bytes of the buckets they resolve
   to, all-unknown buckets and guidance 1 gave the bytes of a request without them, and guidance 1.5 gave other bytes.
-  Guidance costs about a seventh more time here (28.9 against 32.9 times real time): the request's two passes a frame run
+  Guidance costs about a seventh more time here (29.1 against 33.3 times real time): the request's two passes a frame run
   as one. A negative guidance scale, an unknown condition name, a bucket past its table and a value that is not a number
   each got 400.
 - **Cloning encodes the clip on every request**, which is the 0.6 s before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 9.0 s here.
+  first request with a clip also loads the clip encoder: 8.8 s here.
 - **Three requests sent together** were all spoken, each the bytes the request gives alone.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
   `speaker_reference_codes` and an empty input each got 400, and so did an unknown `language` in the second plan.
@@ -104,11 +117,11 @@ in the five mixes equalled the same request's reply alone, byte for byte.
 
 | Sent together | Audio in all | Until the last reply | Times real time in all |
 |---|---:|---:|---:|
-| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 0.73 s | 44.2 |
-| A clone, a guided clone, the long passage, the short one | 29.7 s | 1.79 s | 16.6 |
-| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.50 s | 12.1 |
-| The long passage four times | 71.2 s | 1.17 s | 60.7 |
-| The long passage twice | 35.6 s | 0.71 s | 50.0 |
+| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 0.73 s | 44.4 |
+| A clone, a guided clone, the long passage, the short one | 29.7 s | 1.83 s | 16.3 |
+| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.55 s | 11.7 |
+| The long passage four times | 71.2 s | 1.17 s | 60.8 |
+| The long passage twice | 35.6 s | 0.70 s | 50.7 |
 
 - **Requests at once share part of the work.** The requests in progress advance in one pass of the model a frame,
   so four copies of the long passage take 1.17 s, not four times the 0.48 s one takes alone. The audio decoder and
@@ -140,20 +153,46 @@ serves without it, and `controls` are then refused. `GET /v1/audio/controls` lis
   controls guidance 1, a span rate of 1 and a hold of 1 on an exempt control each gave the bytes of the request
   without them, and other bytes than their counterpart; an unknown control, a voice control on a reference voice, a
   span outside the text, both guidances at once, spans by reading position and a hold above 1 each got 400.
-- **Cost:** a steered reply ran at 32.9 times real time against 33.1 plain. Guidance on the controls runs the model
-  twice a frame (30.9 against 36.6 for that voice plain).
+- **Cost:** a steered reply ran at 33.1 times real time, as the plain one did. Guidance on the controls runs the
+  model twice a frame (31.1 against 36.6 for that voice plain).
 - **What was not measured: whether a control sounds like its name.** The engine's page shows the port adds exactly
   what the publisher's code adds (identical frames in five test requests); no listening test or classifier was run
   on the results. Whisper transcribed five of the six replies with no errors; the whispered, steered one scored
   0.118 (two words of 17).
 
+## LACI, short texts and markers
+
+`python3 -m rtx build` also fetches the publisher's LACI alignment heads (`assets/laci_heads`, 43 files) and the
+short-text registry of its Python package, from the same commit as the steering bundle; `laci = false` in
+`local.toml` serves without them. The pause, start and phoneme tokens are in the release itself.
+
+- **LACI** (`"laci": true`, `say --laci`): the server reads the model's place in the text after every frame. A
+  skipped stretch, a stall or an early end rolls the reply back to where it went wrong and regenerates from
+  there, up to eight times. It needs `speaker_cfg_scale` and `controls_cfg_scale` at 1.
+  - On the long passage it changed nothing here and cost nothing: the same 17.8 s in 0.48 s. Streamed, the first
+    byte came at 0.08 s where it otherwise comes at 0.04 s, because rows a rollback could still reach are held.
+  - A streamed reply under LACI can differ from the whole one when a retry happens: rows already sent cannot be
+    taken back, so the rollback starts later. Without a retry the two are the same bytes, as in all six cases here.
+- **Short texts.** "Hello." alone took 0.87 s of audio; as a short text (the default) 1.07 s. The reply is held
+  until its cut is decided, so it arrives in one piece even when streamed.
+- **Markers** are private-use characters typed into the text: `\uE005` after a word is a pause of about a
+  second, `\uE002` first is the start marker, and `\uE000...\uE001` holds IPA phones, spoken in place of a spelled word. An unknown marker, a start marker that is not first, an unclosed group and a phone outside
+  the release's 136 get 400.
+- **Checked** (the `speech-laci` plan): all six cases repeat byte for byte and stream the same bytes;
+  `start_immediately` gave the bytes of the typed start marker and other bytes than without it; `laci: false`
+  and `short_text: "auto"` gave the bytes of requests without them; six bad requests got 400.
+- **Not measured:** how often LACI rescues a reply in practice, or whether short texts sound better this way.
+  The engine's page shows the port does what the publisher's code does, retries included. Whisper transcribed
+  five of the six replies without error; the one with a pronunciation group scored 0.2, where the reference text
+  it is scored against holds the IPA and the markers.
+
 ## Memory
 
-The engine's own count of device memory, at the recipe's four requests at once: 7,573,076,480 bytes after load, and
-13,249,328,544 once a request with a clip has loaded the clip encoder and guided requests have made three second
-lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,862,487,552 and
-`parallel = 8` in 12,520,528,384. cuBLAS's own allocations are outside that count; `nvidia-smi` showed the process
-at 7,942 MiB after the load at four at once. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
+The engine's own count of device memory, at the recipe's four requests at once: 7,577,534,976 bytes after load, and
+13,264,700,832 once a request with a clip has loaded the clip encoder and guided requests have made four second
+lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,866,946,048 and
+`parallel = 8` in 12,524,986,880. cuBLAS's own allocations are outside that count; `nvidia-smi` showed the process
+at 7,946 MiB after the load at four at once. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
 card. At four at once a card needs about 8 GiB free to speak and about 13.5 GiB to clone; at one, about 4.5 and 10.
 
 `python3 -m rtx up` checks that the card has room for the load before it starts, and says so when there is not
@@ -162,9 +201,9 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `33285c8ea`, kept as
-the tag `zonos3-openai-33285c8ea` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-seven changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `0b3c39654`, kept as
+the tag `zonos3-openai-0b3c39654` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+eight changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
@@ -174,7 +213,10 @@ seven changes not yet proposed upstream:
 - several requests at once, advancing in one pass of the model (the same page, "Requests at once");
 - the audio decoder's linear layers through cuBLAS (the same page, "The decoder's GEMM");
 - steering controls (the same page, "Steering controls"): against the publisher's code with its bundle, the
-  deltas and moved embeddings are bit-identical and the greedy frames identical in five requests.
+  deltas and moved embeddings are bit-identical and the greedy frames identical in five requests;
+- LACI, short texts and the phoneme, start and pause tokens (the same page, the sections of those names): the
+  publisher's own replay fixtures pass, and on the model thirteen greedy requests, four of which retry eight times,
+  give its readings, masks, rows and records.
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -199,7 +241,7 @@ the `hf` command; Rust 1.88 or later for text normalization.
 ```sh
 cp local.example.toml local.toml     # set zig, nvcc, cargo and where the release and a TensorFold clone live
 python3 -m rtx fetch                 # the release at its pin, 15 GB, into model_dir
-python3 -m rtx build                 # the pinned engine, the text normalizer and the steering bundle, under ~/.cache/zonos3-mini
+python3 -m rtx build                 # the pinned engine, the text normalizer, the steering bundle and the LACI heads, under ~/.cache/zonos3-mini
 python3 -m rtx validate
 python3 -m rtx up --foreground       # the API on :30117 and the test page on :30118; Ctrl-C stops both
 ```
@@ -221,7 +263,9 @@ python3 -m rtx down
 `say` picks the format from the file's extension (`.wav .mp3 .ogg .flac .aac .pcm`); `--language de` names the
 normalizer's grammar and `--as-typed` turns normalization off; `--rate 10` and `--loudness -20` set condition values
 and `--guidance 1.5` the speaker guidance scale; `--control NAME=DOSE` (repeatable) steers, `--by-embedding` speaks
-the voice by its speaker embedding and `--controls-guidance 1.5` is guidance on the controls. Other commands: `status`,
+the voice by its speaker embedding and `--controls-guidance 1.5` is guidance on the controls; `--laci` generates under
+LACI, `--start` asks for speech from the first frame and `--no-short-text` speaks a word or two without the filler.
+Other commands: `status`,
 `logs`, `voices`, `controls` (the steering controls by kind), `command` (prints the serve command) and `systemd` (writes a systemd user unit that keeps
 `up --foreground` running; enabling it is left to you). Settings live in `recipe.toml`; `local.toml` and upper-case
 environment variables override them (`PORT=30200 python3 -m rtx up`). `parallel` is how many requests are spoken at
@@ -273,8 +317,8 @@ past the server's `parallel` gets 503.
 ## Checking it again
 
 The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech`,
-`speech-normalize`, `speech-controls`, `speech-concurrent` and `speech-steer` plans against the `zonos3-mini-5090`
-target; the runs' files and the spoken replies are in `evidence/`.
+`speech-normalize`, `speech-controls`, `speech-concurrent`, `speech-steer` and `speech-laci` plans against the
+`zonos3-mini-5090` target; the runs' files and the spoken replies are in `evidence/`.
 
 ```sh
 git clone https://github.com/BobClawblaw/recipe-harness && cd recipe-harness
@@ -284,6 +328,7 @@ python3 -m harness run zonos3-mini-5090 --plan speech-normalize
 python3 -m harness run zonos3-mini-5090 --plan speech-controls
 python3 -m harness run zonos3-mini-5090 --plan speech-concurrent
 python3 -m harness run zonos3-mini-5090 --plan speech-steer
+python3 -m harness run zonos3-mini-5090 --plan speech-laci
 ```
 
 Each plan starts its own server, so `python3 -m rtx down` first. The word error rate needs `tools/asr.py`'s packages

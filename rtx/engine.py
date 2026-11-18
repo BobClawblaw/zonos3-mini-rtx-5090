@@ -7,11 +7,11 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .config import INCLUDE, STEER_DIR, STEER_REPO, STEER_SHA, TEXTNORM_REPO, TEXTNORM_RUST, TEXTNORM_SHA, Settings
+from .config import INCLUDE, LACI_DIR, SHORT_DIR, STEER_DIR, STEER_REPO, STEER_SHA, TEXTNORM_REPO, TEXTNORM_RUST, TEXTNORM_SHA, Settings
 
 # where tensorfold_sha lives until the family reaches TensorFold's main: a tag, since the PR branch is rebased
 TENSORFOLD_REPO = "https://github.com/BobClawblaw/TensorFold"
-TENSORFOLD_REF = "refs/tags/zonos3-openai-33285c8ea"
+TENSORFOLD_REF = "refs/tags/zonos3-openai-0b3c39654"
 
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -48,15 +48,15 @@ def build(s: Settings, rebuild: bool = False) -> Path:
 
 
 def steering(s: Settings) -> Path | None:
-    """The publisher's steering bundle at its pinned commit: only that folder of its code repository (1.3 MB)."""
-    if not s.steer or s.steer_bundle:
-        return s.bundle
+    """The publisher's steering bundle, LACI heads and short-text registry at their pinned commit: three folders of
+    its code repository (2 MB), nothing else of it."""
     src = s.steer_src
-    if not s.bundle.exists():
+    fetched = (not s.steer or bool(s.steer_bundle) or s.bundle.exists()) and (not s.laci or (s.laci_heads.is_dir() and s.short_text.exists()))
+    if not fetched:
         if not (src / ".git").exists():
             src.parent.mkdir(parents=True, exist_ok=True)
             _run(["git", "clone", "--filter=blob:none", "--no-checkout", "--sparse", STEER_REPO, str(src)])
-        _run(["git", "-C", str(src), "sparse-checkout", "set", STEER_DIR])
+        _run(["git", "-C", str(src), "sparse-checkout", "set", STEER_DIR, LACI_DIR, SHORT_DIR])
         _run(["git", "-C", str(src), "checkout", "--detach", STEER_SHA])
     return s.bundle
 

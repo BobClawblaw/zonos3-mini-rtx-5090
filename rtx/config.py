@@ -31,6 +31,10 @@ STEER_REPO = "https://github.com/Zyphra/ZONOS3-Mini"
 STEER_SHA = "96d9e0ec1e39083ed336ac78f24e3dbc93721c0f"
 STEER_DIR = "assets/steering"
 STEER_BUNDLE = "studio_bundle_mect60k_x10.json"
+# from the same repository and commit: LACI's alignment heads, and the short-text registry of its Python package
+LACI_DIR = "assets/laci_heads"
+SHORT_DIR = "model/src/zonos3/registries"
+SHORT_FILE = "short_text.json"
 
 
 @dataclass
@@ -55,6 +59,7 @@ class Settings:
     api_key: str = ""
     steer: bool = True
     steer_bundle: str = ""
+    laci: bool = True
     extra_args: str = ""
 
     @staticmethod
@@ -145,6 +150,15 @@ class Settings:
             return None
         return self.path(self.steer_bundle) if self.steer_bundle else self.steer_src / STEER_DIR / STEER_BUNDLE
 
+    @property
+    def laci_heads(self) -> Path:
+        """The folder of alignment-head files `build` fetched: what `laci` requests and short texts need."""
+        return self.steer_src / LACI_DIR
+
+    @property
+    def short_text(self) -> Path:
+        return self.steer_src / SHORT_DIR / SHORT_FILE
+
     def serve_args(self) -> list[str]:
         a = [str(self.run_binary), "serve", str(self.model), "--name", self.served_name, "--host", self.host, "--port", str(self.port),
              "--parallel", str(self.parallel), "--no-update-check"]
@@ -152,6 +166,8 @@ class Settings:
             a += ["--api-key", self.api_key]
         if self.bundle is not None:
             a += ["--steer-bundle", str(self.bundle)]
+        if self.laci:
+            a += ["--laci-heads", str(self.laci_heads), "--short-text", str(self.short_text)]
         return a + self.extra_args.split()
 
     def page_args(self) -> list[str]:
@@ -205,6 +221,8 @@ def validate(s: Settings) -> list[str]:
         out.append(f"no test page at {s.page_script}: the pinned engine should hold it")
     if s.bundle is not None and not s.bundle.exists():
         out.append(f"no steering bundle at {s.bundle}: python3 -m rtx build fetches it (or steer = false)")
+    if s.laci and not (s.laci_heads.is_dir() and s.short_text.exists()):
+        out.append(f"no LACI heads at {s.laci_heads} or no {s.short_text}: python3 -m rtx build fetches them (or laci = false)")
     if not 1 <= s.parallel <= 16:
         out.append(f"parallel = {s.parallel}: the server takes 1 to 16 requests at once")
     if s.host not in ("127.0.0.1", "localhost") and not s.api_key:

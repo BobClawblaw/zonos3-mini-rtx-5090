@@ -2,7 +2,7 @@
  "cases": {
   "plain": {
    "status": 200,
-   "first_request_s": 0.238,
+   "first_request_s": 0.232,
    "bytes": 364560,
    "audio_s": 4.13,
    "whole_s": [
@@ -11,12 +11,12 @@
    ],
    "times_real_time": 32.0,
    "stream_first_byte_s": [
-    0.033,
-    0.033
+    0.032,
+    0.032
    ],
    "stream_s": [
-    0.131,
-    0.131
+    0.129,
+    0.129
    ],
    "repeat_identical": true,
    "stream_identical": true,

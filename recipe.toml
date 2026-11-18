@@ -13,7 +13,7 @@ model_dir = "~/models/ZONOS3-Mini"
 # TensorFold's native CUDA engine with the zonos3 family and the encoded reply formats: a worktree of tensorfold_src
 # at tensorfold_sha, built by `python3 -m rtx build` under tf_cache; `binary` names a built tensorfold-native instead
 tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha (made by `build` if it is missing)
-tensorfold_sha = "33285c8ea1fdc4b41d3dd8292f5cb1a600e0a0eb"   # tag zonos3-openai-33285c8ea (engine.py fetches it)
+tensorfold_sha = "0b3c396540dd1879db99427d9079bdd155facd0b"   # tag zonos3-openai-0b3c39654 (engine.py fetches it)
 zig = "zig"                              # Zig 0.17.0
 nvcc = "/usr/local/cuda/bin/nvcc"        # CUDA 13
 sm = "120"                               # the card's architecture: 120 is the RTX 50 series, the only one run
@@ -32,4 +32,5 @@ parallel = 4              # requests at once (1 to 16): 3.6 GiB of the card at 1
 api_key = ""
 steer = true              # load Zyphra's steering bundle (`build` fetches it): the `controls` a request may name
 steer_bundle = ""         # another bundle file, in place of the fetched one
+laci = true               # load the LACI heads and the short-text registry (`build` fetches them): `laci` requests, short texts
 extra_args = ""
