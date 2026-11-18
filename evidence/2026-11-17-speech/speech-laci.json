@@ -1,25 +1,25 @@
 {
  "ok": true,
- "summary": "8/8 cases spoken; 16.7-37.2 times real time (38.2 s of audio), streamed first byte 0.02-0.08 s; repeats identical 8/8, streamed identical 8/8; WER 0.000-0.200; same audio 4/4; refusals 8/8",
+ "summary": "9/9 cases spoken; 16.4-37.1 times real time (42.4 s of audio), streamed first byte 0.02-0.21 s; repeats identical 9/9, streamed identical 9/9; WER 0.000-0.200; same audio 4/4; refusals 10/10",
  "metrics": {
   "cases": {
    "watched": {
     "status": 200,
-    "first_request_s": 0.596,
+    "first_request_s": 0.581,
     "bytes": 1569960,
     "audio_s": 17.8,
     "whole_s": [
-     0.479,
-     0.482
+     0.48,
+     0.483
     ],
-    "times_real_time": 37.2,
+    "times_real_time": 37.1,
     "stream_first_byte_s": [
-     0.079,
-     0.081
+     0.078,
+     0.08
     ],
     "stream_s": [
-     0.482,
-     0.483
+     0.479,
+     0.484
     ],
     "repeat_identical": true,
     "stream_identical": true,
@@ -27,21 +27,21 @@
    },
    "short": {
     "status": 200,
-    "first_request_s": 0.056,
+    "first_request_s": 0.055,
     "bytes": 94080,
     "audio_s": 1.07,
     "whole_s": [
-     0.056,
+     0.055,
      0.057
     ],
-    "times_real_time": 19.0,
+    "times_real_time": 19.4,
     "stream_first_byte_s": [
      0.055,
-     0.056
+     0.057
     ],
     "stream_s": [
      0.055,
-     0.056
+     0.057
     ],
     "repeat_identical": true,
     "stream_identical": true,
@@ -49,21 +49,21 @@
    },
    "short-off": {
     "status": 200,
-    "first_request_s": 0.052,
+    "first_request_s": 0.051,
     "bytes": 76440,
     "audio_s": 0.87,
     "whole_s": [
-     0.052,
+     0.053,
      0.053
     ],
-    "times_real_time": 16.7,
+    "times_real_time": 16.4,
     "stream_first_byte_s": [
      0.032,
-     0.033
+     0.034
     ],
     "stream_s": [
      0.051,
-     0.052
+     0.053
     ],
     "repeat_identical": true,
     "stream_identical": true,
@@ -71,7 +71,7 @@
    },
    "pause": {
     "status": 200,
-    "first_request_s": 0.096,
+    "first_request_s": 0.097,
     "bytes": 241080,
     "audio_s": 2.73,
     "whole_s": [
@@ -84,7 +84,7 @@
      0.034
     ],
     "stream_s": [
-     0.097,
+     0.096,
      0.098
     ],
     "repeat_identical": true,
@@ -98,12 +98,12 @@
     "audio_s": 2.0,
     "whole_s": [
      0.082,
-     0.083
+     0.082
     ],
     "times_real_time": 24.4,
     "stream_first_byte_s": [
      0.032,
-     0.034
+     0.033
     ],
     "stream_s": [
      0.082,
@@ -119,17 +119,17 @@
     "bytes": 282240,
     "audio_s": 3.2,
     "whole_s": [
-     0.107,
-     0.109
+     0.108,
+     0.11
     ],
-    "times_real_time": 29.9,
+    "times_real_time": 29.6,
     "stream_first_byte_s": [
      0.033,
-     0.033
+     0.034
     ],
     "stream_s": [
      0.108,
-     0.108
+     0.109
     ],
     "repeat_identical": true,
     "stream_identical": true,
@@ -137,12 +137,12 @@
    },
    "follow": {
     "status": 200,
-    "first_request_s": 0.147,
+    "first_request_s": 0.146,
     "bytes": 464520,
     "audio_s": 5.27,
     "whole_s": [
      0.146,
-     0.148
+     0.147
     ],
     "times_real_time": 36.1,
     "stream_first_byte_s": [
@@ -150,8 +150,8 @@
      0.022
     ],
     "stream_s": [
-     0.146,
-     0.148
+     0.147,
+     0.149
     ],
     "repeat_identical": true,
     "stream_identical": true,
@@ -164,7 +164,7 @@
     "audio_s": 5.27,
     "whole_s": [
      0.146,
-     0.148
+     0.147
     ],
     "times_real_time": 36.1,
     "stream_first_byte_s": [
@@ -173,11 +173,33 @@
     ],
     "stream_s": [
      0.146,
-     0.148
+     0.147
     ],
     "repeat_identical": true,
     "stream_identical": true,
     "wer": 0.0
+   },
+   "duration": {
+    "status": 200,
+    "first_request_s": 0.233,
+    "bytes": 370440,
+    "audio_s": 4.2,
+    "whole_s": [
+     0.232,
+     0.233
+    ],
+    "times_real_time": 18.1,
+    "stream_first_byte_s": [
+     0.208,
+     0.209
+    ],
+    "stream_s": [
+     0.231,
+     0.232
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.118
    }
   },
   "refusals": {
@@ -208,6 +230,14 @@
    "follow-bad-value": {
     "status": 400,
     "message": "{\"error\": {\"message\": \"ZONOS3 request: control_span_follow must be \\\"rate\\\" or \\\"reading\\\"\", \"type\": \"invalid_request_error\"}}"
+   },
+   "duration-without-laci": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: A LACI duration target needs laci=true\", \"type\": \"invalid_request_error\"}}"
+   },
+   "duration-past-the-budget": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: duration_seconds must be above 0 and at most 133.33 (the frame budget)\", \"type\": \"invalid_request_error\"}}"
    },
    "follow-lag-out-of-range": {
     "status": 400,
@@ -254,5 +284,5 @@
  },
  "name": "speech",
  "type": "speech",
- "seconds": 44.0
+ "seconds": 50.3
 }

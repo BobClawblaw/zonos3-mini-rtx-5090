@@ -48,7 +48,7 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   (or `"start_immediately": true`: speech from the first frame) and pronunciation groups in IPA. See "LACI, short
   texts and markers".
 
-Not served: LACI's duration targets, accent adapters (Zyphra has published none for this model: its guide's adapters
+Not served: accent adapters (Zyphra has published none for this model: its guide's adapters
 were trained on an earlier backbone kept in its private repository). `speed` and `instructions` are refused: the model has no such controls.
 
 Arithmetic is fp32 throughout, checked against the publisher's code run in fp32 with exact gates. The publisher's
@@ -193,6 +193,12 @@ short-text registry of its Python package, from the same commit as the steering 
     byte came at 0.08 s where it otherwise comes at 0.04 s, because rows a rollback could still reach are held.
   - A streamed reply under LACI can differ from the whole one when a retry happens: rows already sent cannot be
     taken back, so the rollback starts later. Without a retry the two are the same bytes, as in all six cases here.
+- **Duration targets** (`"duration_seconds": 3.5` with `"laci": true`): the take is held to a length. One that
+  reads its text too early or too late is retaken in the speaking-rate bucket that would fit, at most twice, by
+  Zyphra's own rules (their servers offer this only to plug-ins; the field is ours). Set a speaking rate
+  (`condition_values`) when you want a reply shorter than it would be: with the rate unset, Zyphra's rules have no
+  faster bucket to move to and only record the miss. On five test requests every reading, retake and frame matched
+  Zyphra's code. `"duration_adjust_rate": false` records misses without retakes.
 - **Short texts.** "Hello." alone took 0.87 s of audio; as a short text (the default) 1.07 s. The reply is held
   until its cut is decided, so it arrives in one piece even when streamed.
 - **Markers** are private-use characters typed into the text: `\uE005` after a word is a pause of about a
@@ -277,9 +283,9 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `67416632d`, kept as
-the tag `zonos3-openai-67416632d` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-twelve changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `0829d0907`, kept as
+the tag `zonos3-openai-0829d0907` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+thirteen changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
@@ -304,7 +310,10 @@ twelve changes not yet proposed upstream:
   matching its audio at 66 to 68 dB; `keep2_plain` replies byte-identical to the previous pin's. Two kernels gained
   a ring-size argument and pass the kernel contract with rings that wrap;
 - the test page's inputs for every feature above and its speech-editing tab (the same page, "A test page"),
-  driven in headless Chromium against the served build. No engine code changed.
+  driven in headless Chromium against the served build. No engine code changed;
+- LACI duration targets (`duration_seconds`, the same page, "Duration targets"): Zyphra's pacing logic on 318 of its
+  own traces and five requests on the model, retakes included, equal to its code; and clips at other rates resampled
+  once to 16 kHz for the speaker encoder and the aligner, as Zyphra's do (checked at 48 and 22.05 kHz).
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
