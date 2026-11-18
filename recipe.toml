@@ -13,7 +13,7 @@ model_dir = "~/models/ZONOS3-Mini"
 # TensorFold's native CUDA engine with the zonos3 family and the encoded reply formats: a worktree of tensorfold_src
 # at tensorfold_sha, built by `python3 -m rtx build` under tf_cache; `binary` names a built tensorfold-native instead
 tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha (made by `build` if it is missing)
-tensorfold_sha = "a158fcdaf775f33e15c4f8432b5ffe4a482dfc8d"   # tag zonos3-openai-a158fcdaf (engine.py fetches it)
+tensorfold_sha = "c8c90565af388c54380a3600218085f97bfe424a"   # tag zonos3-openai-c8c90565a (engine.py fetches it)
 zig = "zig"                              # Zig 0.17.0
 nvcc = "/usr/local/cuda/bin/nvcc"        # CUDA 13
 sm = "120"                               # the card's architecture: 120 is the RTX 50 series, the only one run

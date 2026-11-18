@@ -63,6 +63,8 @@ def main(argv: list[str] | None = None) -> int:
         print("\n".join(problems) if problems else f"ok: {s.served_name} from {s.model} with {s.run_binary} at {s.url}")
         for fmt, pkg in config.missing_codecs():
             print(f"note: no library for {fmt} replies (Debian/Ubuntu: sudo apt install {pkg})")
+        if not config.has_cublas():
+            print("note: the loader does not find cuBLAS (libcublas.so.13, CUDA 13's): the decoder needs it, so the server will not load without it")
         if not s.normalizes:
             print("note: no text normalizer: numbers, dates and currency are spoken as typed (python3 -m rtx build, with Rust 1.88 or later)")
         return 1 if problems else 0

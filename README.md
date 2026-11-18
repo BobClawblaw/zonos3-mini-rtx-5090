@@ -42,22 +42,27 @@ server encodes; the engine's page, `docs/recipes/zonos3-mini.md` in the pinned c
 One RTX 5090 (32 GB, driver 615.71, CUDA 13.3), the engine `python3 -m rtx build` makes, through the recipe harness's
 `speech`, `speech-normalize`, `speech-controls` and `speech-concurrent` plans, the server started for four requests at
 once. Each case was asked once, then three times whole and three times streamed. An idle second server (this recipe's
-previous pin) held 4.3 GB of the same card during the runs.
+previous pin) held 7.7 GiB of the same card during the runs.
 
 | Case | Audio | Whole reply | Times real time | Streamed: first byte, done |
 |---|---:|---:|---:|---:|
-| A long passage, voice `rupert` | 17.8 s | 0.61 s | 29.1 | 0.04 s, 0.62 s |
-| A short sentence, the default voice | 4.13 s | 0.16 s | 26.2 | 0.03 s, 0.16 s |
-| A second voice, `imogen` | 5.13 s | 0.19 s | 26.9 | 0.04 s, 0.20 s |
-| A voice cloned from the short reply | 5.13 s | 0.69 to 0.70 s | 7.4 | 0.54 s, 0.70 s |
-| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.20 s | 27.0 | 0.03 to 0.04 s, 0.20 to 0.21 s |
-| The same with speaker guidance 1.5 | 5.27 s | 0.22 s | 23.9 | 0.04 s, 0.22 to 0.23 s |
-| The same at `speaking_rate` 8 | 6.40 s | 0.23 to 0.24 s | 27.5 | 0.03 to 0.04 s, 0.24 s |
-| The same at `speaking_rate` 25 | 3.40 s | 0.14 s | 25.2 | 0.04 s, 0.14 s |
+| A long passage, voice `rupert` | 17.8 s | 0.48 s | 37.5 | 0.04 s, 0.48 s |
+| A short sentence, the default voice | 4.13 s | 0.13 s | 32.3 | 0.03 s, 0.13 s |
+| A second voice, `imogen` | 5.13 s | 0.16 s | 33.1 | 0.03 s, 0.15 to 0.16 s |
+| A voice cloned from the short reply | 5.13 s | 0.72 to 0.73 s | 7.1 | 0.60 to 0.61 s, 0.72 to 0.73 s |
+| A sentence, voice `rupert` (the `speech-controls` plan) | 5.40 s | 0.16 s | 33.1 | 0.03 s, 0.16 s |
+| The same with speaker guidance 1.5 | 5.27 s | 0.18 s | 28.9 | 0.04 s, 0.18 s |
+| The same at `speaking_rate` 8 | 6.40 s | 0.19 s | 34.2 | 0.03 to 0.04 s, 0.19 s |
+| The same at `speaking_rate` 25 | 3.40 s | 0.11 s | 30.1 | 0.03 s, 0.11 to 0.12 s |
 
 - **Replies repeat.** Every case carries a seed; all four gave the same bytes every time, and the streamed bytes equal
   the whole reply's.
-- **Encoded replies:** the long passage as MP3 took 0.76 s, as Opus 0.66 s and as FLAC 0.62 s, each asked twice with
+- **The audio decoder runs on cuBLAS**, NVIDIA's matrix library, since pin `c8c90565a`: the long passage took 0.61 s
+  before. cuBLAS rounds a sum by how much it is given at once, so every reply is decoded in the same steps whether it
+  is streamed or not, which keeps the two equal. Replies differ from the previous pin's by one step of 16-bit audio in
+  about one sample in 2,000 (338 of 784,980 in the long passage, measured by hand), and another cuBLAS release may
+  round differently again: replies are byte-stable on one install, not across installs.
+- **Encoded replies:** the long passage as MP3 took 0.62 s, as Opus 0.53 s and as FLAC 0.49 s, each asked twice with
   equal bytes. AAC is not in the plan; it was checked by hand on the previous pin.
 - **Text normalization** (the `speech-normalize` plan): six written sentences (three English, one each German,
   Portuguese and Japanese, from the normalizer's own test cases) each gave the same bytes as their expected spoken form
@@ -65,11 +70,11 @@ previous pin) held 4.3 GB of the same card during the runs.
   written text spoken as typed.
 - **Condition values and guidance** (the `speech-controls` plan): raw values gave the bytes of the buckets they resolve
   to, all-unknown buckets and guidance 1 gave the bytes of a request without them, and guidance 1.5 gave other bytes.
-  Guidance costs about a tenth more time here (23.9 against 27.0 times real time): the request's two passes a frame run
+  Guidance costs about a seventh more time here (28.9 against 33.1 times real time): the request's two passes a frame run
   as one. A negative guidance scale, an unknown condition name, a bucket past its table and a value that is not a number
   each got 400.
-- **Cloning encodes the clip on every request**, which is the half second before a cloned reply's first byte. The
-  first request with a clip also loads the clip encoder: 8.9 s here.
+- **Cloning encodes the clip on every request**, which is the 0.6 s before a cloned reply's first byte. The
+  first request with a clip also loads the clip encoder: 8.6 s here.
 - **Three requests sent together** were all spoken, each the bytes the request gives alone.
 - **Refusals:** an unknown voice, `top_k` above 4096, a `ref_audio` that is not a WAV file, malformed
   `speaker_reference_codes` and an empty input each got 400, and so did an unknown `language` in the second plan.
@@ -87,26 +92,27 @@ in the five mixes equalled the same request's reply alone, byte for byte.
 
 | Sent together | Audio in all | Until the last reply | Times real time in all |
 |---|---:|---:|---:|
-| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 0.96 s | 33.4 |
-| A clone, a guided clone, the long passage, the short one | 29.7 s | 1.93 s | 15.4 |
-| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.54 s | 11.7 |
-| The long passage four times | 71.2 s | 1.71 s | 41.7 |
-| The long passage twice | 35.6 s | 0.98 s | 36.4 |
+| The long passage, the short one, the guided one, the one with a rate | 32.2 s | 0.73 s | 44.3 |
+| A clone, a guided clone, the long passage, the short one | 29.7 s | 1.84 s | 16.2 |
+| The guided one, a clone, the one with a rate, a guided clone | 18.1 s | 1.55 s | 11.7 |
+| The long passage four times | 71.2 s | 1.17 s | 61.1 |
+| The long passage twice | 35.6 s | 0.71 s | 50.4 |
 
 - **Requests at once share part of the work.** The requests in progress advance in one pass of the model a frame,
-  so four copies of the long passage take 1.71 s, not four times the 0.61 s one takes alone. The audio decoder and
-  the sampling are still done a request at a time, and the decoder is now the larger part.
-- **A clip is encoded in one go**, about half a second during which the other requests wait: the mixes with clones
+  so four copies of the long passage take 1.17 s, not four times the 0.48 s one takes alone. The audio decoder and
+  the sampling are still done a request at a time.
+- **A clip is encoded in one go**, about 0.6 s during which the other requests wait: the mixes with clones
   are the slow ones.
 - **Six at once:** four were spoken, each the bytes it gives alone, and two got 503.
 
 ## Memory
 
-The engine's own count of device memory, at the recipe's four requests at once: 7,538,995,456 bytes after load, and
-13,226,161,312 once a request with a clip has loaded the clip encoder and guided requests have made their second
-lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,828,406,528 and
-`parallel = 8` in 12,486,447,360. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
-card. At four at once a card needs about 7.5 GiB free to speak and about 13 GiB to clone; at one, about 4.5 and 10.5.
+The engine's own count of device memory, at the recipe's four requests at once: 7,572,551,936 bytes after load, and
+13,237,890,208 once a request with a clip has loaded the clip encoder and guided requests have made two second
+lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,861,963,008 and
+`parallel = 8` in 12,520,003,840. cuBLAS's own allocations are outside that count; `nvidia-smi` showed the process
+at 7,942 MiB after the load at four at once. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
+card. At four at once a card needs about 8 GiB free to speak and about 13.5 GiB to clone; at one, about 4.5 and 10.
 
 `python3 -m rtx up` checks that the card has room for the load before it starts, and says so when there is not
 enough left for cloning.
@@ -114,16 +120,17 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `a158fcdaf`, kept as
-the tag `zonos3-openai-a158fcdaf` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-five changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `c8c90565a`, kept as
+the tag `zonos3-openai-c8c90565a` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+six changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
 - text normalization (`docs/recipes/zonos3-mini.md` in the pinned commit, "Text normalization");
 - condition values and speaker guidance (the same page, "Condition values and speaker guidance"): greedy frames
   equal to the publisher's code for both;
-- several requests at once, advancing in one pass of the model (the same page, "Requests at once").
+- several requests at once, advancing in one pass of the model (the same page, "Requests at once");
+- the audio decoder's linear layers through cuBLAS (the same page, "The decoder's GEMM").
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -141,7 +148,8 @@ works: text is then spoken as typed, and `"text_normalization": true` is refused
 
 ## Use
 
-Needs Linux with an NVIDIA card (run on an RTX 5090 only), CUDA 13 with `nvcc`, Zig 0.17.0, git, Python 3.11+ and
+Needs Linux with an NVIDIA card (run on an RTX 5090 only), CUDA 13 with `nvcc` and cuBLAS (`libcublas.so.13`, which
+the decoder runs on), Zig 0.17.0, git, Python 3.11+ and
 the `hf` command; Rust 1.88 or later for text normalization.
 
 ```sh

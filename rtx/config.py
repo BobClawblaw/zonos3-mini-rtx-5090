@@ -13,7 +13,7 @@ INCLUDE = ("lm/*", "autoencoder/*", "registries/*", "gguf/voices/*", "speaker_en
 NEEDED = ("lm/zonos3_mini/model.pth", "autoencoder/generator.pt", "autoencoder/teacher/model.safetensors", "gguf/voices")
 # device memory measured on an RTX 5090: after load, and once a request with a clip has loaded the clip encoder
 # the engine's own device bytes: the load at one request at once, each request at once past it, the clip encoder
-LOAD_BYTES = 3_828_406_528
+LOAD_BYTES = 3_861_963_008
 LANE_BYTES = 1_236_862_976
 CLIP_BYTES = 5_643_510_688
 # the libraries the server loads when a reply is first asked in their format:
@@ -163,6 +163,11 @@ def load(local_file: Path | None = None, env: dict[str, str] | None = None) -> S
 def missing_codecs() -> list[tuple[str, str]]:
     """(format, package) for each encoded format whose library neither its variable nor the loader finds."""
     return [(fmt, pkg) for fmt, lib, var, pkg in CODECS if not (os.path.isfile(os.environ.get(var, "")) or ctypes.util.find_library(lib))]
+
+
+def has_cublas() -> bool:
+    """Whether the loader finds cuBLAS, which the engine opens for the decoder's linear layers."""
+    return bool(ctypes.util.find_library("cublas"))
 
 
 def validate(s: Settings) -> list[str]:
