@@ -1,137 +1,180 @@
 {
- "cases": {
-  "plain": {
-   "status": 200,
-   "first_request_s": 0.27,
-   "bytes": 476280,
-   "audio_s": 5.4,
-   "whole_s": [
-    0.162,
-    0.163
-   ],
-   "times_real_time": 33.3,
-   "stream_first_byte_s": [
-    0.034,
-    0.034
-   ],
-   "stream_s": [
-    0.163,
-    0.165
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
+ "ok": true,
+ "summary": "5/5 cases spoken; 20.3-34.0 times real time (25.9 s of audio), streamed first byte 0.03-0.04 s; repeats identical 5/5, streamed identical 5/5; WER 0.000-0.059; same audio 4/4; refusals 5/5",
+ "metrics": {
+  "cases": {
+   "plain": {
+    "status": 200,
+    "first_request_s": 0.264,
+    "bytes": 476280,
+    "audio_s": 5.4,
+    "whole_s": [
+     0.162,
+     0.163
+    ],
+    "times_real_time": 33.3,
+    "stream_first_byte_s": [
+     0.033,
+     0.035
+    ],
+    "stream_s": [
+     0.164,
+     0.165
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "guided": {
+    "status": 200,
+    "first_request_s": 0.187,
+    "bytes": 464520,
+    "audio_s": 5.27,
+    "whole_s": [
+     0.182,
+     0.183
+    ],
+    "times_real_time": 28.9,
+    "stream_first_byte_s": [
+     0.037,
+     0.039
+    ],
+    "stream_s": [
+     0.182,
+     0.184
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "slow": {
+    "status": 200,
+    "first_request_s": 0.189,
+    "bytes": 564480,
+    "audio_s": 6.4,
+    "whole_s": [
+     0.188,
+     0.189
+    ],
+    "times_real_time": 34.0,
+    "stream_first_byte_s": [
+     0.033,
+     0.034
+    ],
+    "stream_s": [
+     0.188,
+     0.189
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "fast": {
+    "status": 200,
+    "first_request_s": 0.114,
+    "bytes": 299880,
+    "audio_s": 3.4,
+    "whole_s": [
+     0.115,
+     0.116
+    ],
+    "times_real_time": 29.6,
+    "stream_first_byte_s": [
+     0.034,
+     0.035
+    ],
+    "stream_s": [
+     0.114,
+     0.117
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.059
+   },
+   "full-decoder": {
+    "status": 200,
+    "first_request_s": 8.484,
+    "bytes": 476280,
+    "audio_s": 5.4,
+    "whole_s": [
+     0.266,
+     0.267
+    ],
+    "times_real_time": 20.3,
+    "stream_first_byte_s": [
+     0.039,
+     0.039
+    ],
+    "stream_s": [
+     0.266,
+     0.266
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   }
   },
-  "guided": {
-   "status": 200,
-   "first_request_s": 0.186,
-   "bytes": 464520,
-   "audio_s": 5.27,
-   "whole_s": [
-    0.181,
-    0.183
-   ],
-   "times_real_time": 29.1,
-   "stream_first_byte_s": [
-    0.037,
-    0.038
-   ],
-   "stream_s": [
-    0.181,
-    0.182
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
+  "refusals": {
+   "guidance-negative": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: speaker_cfg_scale must be finite and not negative\", \"type\": \"invalid_request_error\"}}"
+   },
+   "condition-unknown-name": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: condition_buckets: unknown condition name 'pitch'; expected loudness, fmax, speaking_rate\", \"type\": \"invalid_request_error\"}}"
+   },
+   "condition-bucket-too-large": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: condition_buckets[loudness] must be an integer from 0 through 9, or 10 (unknown)\", \"type\": \"invalid_request_error\"}}"
+   },
+   "decoder-unknown": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"Unknown decoder 'nope'; this server serves: keep2_plain, full_mr.\", \"type\": \"invalid_request_error\"}}"
+   },
+   "condition-value-not-a-number": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: condition_values[fmax] must be a number\", \"type\": \"invalid_request_error\"}}"
+   }
   },
-  "slow": {
-   "status": 200,
-   "first_request_s": 0.188,
-   "bytes": 564480,
-   "audio_s": 6.4,
-   "whole_s": [
-    0.187,
-    0.189
-   ],
-   "times_real_time": 34.2,
-   "stream_first_byte_s": [
-    0.034,
-    0.035
-   ],
-   "stream_s": [
-    0.188,
-    0.189
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
+  "same": {
+   "value-is-its-bucket": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   },
+   "unknown-buckets-are-none": {
+    "statuses": [
+     200,
+     200
+    ],
+    "equal": true
+   },
+   "default-decoder-is-keep2": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   },
+   "guidance-one-is-off": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   }
   },
-  "fast": {
-   "status": 200,
-   "first_request_s": 0.113,
-   "bytes": 299880,
-   "audio_s": 3.4,
-   "whole_s": [
-    0.113,
-    0.114
-   ],
-   "times_real_time": 30.1,
-   "stream_first_byte_s": [
-    0.034,
-    0.035
-   ],
-   "stream_s": [
-    0.115,
-    0.115
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.059
-  }
+  "failures": []
  },
- "refusals": {
-  "guidance-negative": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: speaker_cfg_scale must be finite and not negative\", \"type\": \"invalid_request_error\"}}"
-  },
-  "condition-unknown-name": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: condition_buckets: unknown condition name 'pitch'; expected loudness, fmax, speaking_rate\", \"type\": \"invalid_request_error\"}}"
-  },
-  "condition-bucket-too-large": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: condition_buckets[loudness] must be an integer from 0 through 9, or 10 (unknown)\", \"type\": \"invalid_request_error\"}}"
-  },
-  "condition-value-not-a-number": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: condition_values[fmax] must be a number\", \"type\": \"invalid_request_error\"}}"
-  }
- },
- "same": {
-  "value-is-its-bucket": {
-   "statuses": [
-    200,
-    200,
-    200
-   ],
-   "equal": true,
-   "other_differs": true
-  },
-  "unknown-buckets-are-none": {
-   "statuses": [
-    200,
-    200
-   ],
-   "equal": true
-  },
-  "guidance-one-is-off": {
-   "statuses": [
-    200,
-    200,
-    200
-   ],
-   "equal": true,
-   "other_differs": true
-  }
- }
+ "name": "speech",
+ "type": "speech",
+ "seconds": 37.5
 }

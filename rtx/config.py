@@ -13,8 +13,8 @@ INCLUDE = ("lm/*", "autoencoder/*", "registries/*", "gguf/voices/*", "speaker_en
 NEEDED = ("lm/zonos3_mini/model.pth", "autoencoder/generator.pt", "autoencoder/teacher/model.safetensors", "gguf/voices")
 # device memory measured on an RTX 5090: after load, and once a request with a clip has loaded the clip encoder
 # the engine's own device bytes: the load at one request at once, each request at once past it, the clip encoder
-LOAD_BYTES = 4_010_630_656
-LANE_BYTES = 1_236_862_976
+LOAD_BYTES = 3_269_295_616
+LANE_BYTES = 495_527_936
 CLIP_BYTES = 5_643_510_688
 # the libraries the server loads when a reply is first asked in their format:
 # (format, library, the variable that names its file instead, Debian package)

@@ -49,8 +49,7 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   texts and markers".
 
 Not served: LACI's duration targets, accent adapters (Zyphra has published none for this model: its guide's adapters
-were trained on an earlier backbone kept in its private repository), and the release's `full_mr` decoder (the server
-uses `keep2_plain`, the reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
+were trained on an earlier backbone kept in its private repository). `speed` and `instructions` are refused: the model has no such controls.
 
 Arithmetic is fp32 throughout, checked against the publisher's code run in fp32 with exact gates. The publisher's
 CUDA servers run the codec in bf16, so the codes this port encodes from a clip are not bit for bit the ones their
@@ -134,6 +133,16 @@ in the five mixes equalled the same request's reply alone, byte for byte.
 - **A clip is encoded in one go**, about 0.6 s during which the other requests wait: the mixes with clones
   are the slow ones.
 - **Six at once:** four were spoken, each the bytes it gives alone, and two got 503.
+
+## Decoders
+
+The release has two audio decoders for the same codes: `keep2_plain`, the default (two transformer layers a stage),
+and the full-size `full_mr`. A request picks one with `"decoder": "full_mr"` (speech and edits), the reply names it
+in `X-Decoder`, and `GET /v1/audio/decoders` lists them. `full_mr` loads with the first request that asks for it
+(the first such reply took 8.5 s, most of it the load) and then stays: 7.1 GB at four at once. It decoded 11.4 s of codes at 66 times real
+time against 343 for `keep2_plain`; the `speech-controls` plan's reply through it ran at 20.4 times real time
+against 31 to 34 for the plain ones. Which sounds better was not measured: no listening test was run.
+`extra_args = "--decoders keep2_plain"` in `local.toml` serves the default alone.
 
 ## Steering
 
@@ -249,15 +258,18 @@ python3 -m rtx align clip.wav "The quick brown fox jumps over the lazy dog."
 
 ## Memory
 
-The engine's own count of device memory, at the recipe's four requests at once: 7,721,219,584 bytes after load
-(143,684,608 of them the speech-edit adapter), and 15,211,460,704 once an edit by transcript has loaded the clip
-encoder (5,643,510,688) and the aligner (1,846,591,492). Each request at once past the first costs 1,236,862,976
-bytes, so `parallel = 1` loads in 4,010,630,656 and `parallel = 8` in 12,668,671,488. Guided requests add
-10,913,792 bytes each for a second lane. cuBLAS's own allocations are outside that count; `nvidia-smi` showed the
-process at 8,096 MiB after the load at four at once and at 15,670 MiB after that edit. The `nvidia-smi` lines in
-`evidence/` include the second server that sat on the card. At four at once a card needs about 8.5 GiB free to
-speak, about 13.5 GiB to clone and about 16 GiB to edit by transcript; at one, about 4.5, 10 and 12. The speaker
-encoder runs on the CPU and takes host memory instead, about 1.5 GB for a 60 s clip.
+The engine's own count of device memory, at the recipe's four requests at once: 4,755,879,424 bytes after load
+(143,684,608 of them the speech-edit adapter), and 12,245,981,604 once an edit by transcript has loaded the clip
+encoder (5,643,510,688) and the aligner (1,846,591,492). Each request at once past the first costs 495,527,936
+bytes, so `parallel = 1` loads in 3,269,295,616 and `parallel = 8` in 6,737,991,168. Guided requests add
+10,913,792 bytes each for a second lane. The full-size `full_mr` decoder loads with its first request and adds
+7,149,936,384 at four at once (its 4,253,052,672 bytes of weights and a lane for each request). Since pin
+`a82f4d8c5` the audio decoder's attention caches hold each stage's window instead of the whole reply, which took
+2.97 GB off the load at four at once with the same audio. cuBLAS and the CUDA context are outside that count: on the
+earlier pin `nvidia-smi` showed the process about 770 MB above the engine's count after load. At four at once a card
+therefore needs about 5.1 GiB free to speak, about 10.4 GiB to clone and about 12.1 GiB to edit by transcript, and
+6.7 GiB more for `full_mr`; at one, about 3.8, 9.0 and 10.7. The speaker encoder runs on the CPU and takes host
+memory instead, about 1.5 GB for a 60 s clip.
 
 `python3 -m rtx up` checks that the card has room for the load before it starts, and says so when there is not
 enough left for cloning.
@@ -265,9 +277,9 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `0a1a216c3`, kept as
-the tag `zonos3-openai-0a1a216c3` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-ten changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `a82f4d8c5`, kept as
+the tag `zonos3-openai-a82f4d8c5` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+eleven changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
@@ -286,7 +298,11 @@ ten changes not yet proposed upstream:
   of its encoder's, and word times within 1 ms of its aligner's on the same weights. No kernel was added;
 - steering spans that follow the reading position (the same page, "Spans that follow the reading"): on six greedy
   requests, one retried eight times under LACI, every reading, every frame's span weights and the frames equal the
-  publisher's code, and its three follower replay fixtures pass. No kernel was added.
+  publisher's code, and its three follower replay fixtures pass. No kernel was added;
+- the full-size `full_mr` decoder on request, and the decoder's attention caches as rings (the same page, "The two
+  decoders"): `full_mr`'s 13 capture points and audio equal to the publisher's decode (118.3 dB), served replies
+  matching its audio at 66 to 68 dB; `keep2_plain` replies byte-identical to the previous pin's. Two kernels gained
+  a ring-size argument and pass the kernel contract with rings that wrap.
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
