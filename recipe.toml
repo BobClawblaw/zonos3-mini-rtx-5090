@@ -2,10 +2,10 @@
 # environment variable of the same name in upper case overrides both (PORT=30200 python3 -m rtx up).
 
 [model]
-# Zyphra's release as published (Apache-2.0; nothing is converted). `python3 -m rtx fetch` downloads the 15 GB the
+# Zyphra's release as published (Apache-2.0; nothing is converted). `python3 -m rtx fetch` downloads the 16 GB the
 # server reads: hf download <model_repo> --revision <model_revision> --local-dir <model_dir> --include ...
 model_repo = "Zyphra/ZONOS3-Mini"
-model_revision = "d2d142a86b1e6aeb4252679673c86ecd86177bf8"
+model_revision = "2921b8821772b0bd10a04456863d21abf9d2f283"
 served_name = "zonos3-mini"
 model_dir = "~/models/ZONOS3-Mini"
 
@@ -13,7 +13,7 @@ model_dir = "~/models/ZONOS3-Mini"
 # TensorFold's native CUDA engine with the zonos3 family and the encoded reply formats: a worktree of tensorfold_src
 # at tensorfold_sha, built by `python3 -m rtx build` under tf_cache; `binary` names a built tensorfold-native instead
 tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha (made by `build` if it is missing)
-tensorfold_sha = "0b3c396540dd1879db99427d9079bdd155facd0b"   # tag zonos3-openai-0b3c39654 (engine.py fetches it)
+tensorfold_sha = "c47b77649820aee956f61bac0420a853198af41e"   # tag zonos3-openai-c47b77649 (engine.py fetches it)
 zig = "zig"                              # Zig 0.17.0
 nvcc = "/usr/local/cuda/bin/nvcc"        # CUDA 13
 sm = "120"                               # the card's architecture: 120 is the RTX 50 series, the only one run

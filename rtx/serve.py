@@ -210,6 +210,55 @@ def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = No
     return f"{out}: {len(data)} bytes in {time.time() - t0:.2f} s"
 
 
+def _post(s: Settings, route: str, body: dict) -> dict:
+    headers = {"content-type": "application/json", **({"authorization": f"Bearer {s.api_key}"} if s.api_key else {})}
+    req = urllib.request.Request(s.url + route, data=json.dumps(body).encode(), headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=600) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"{e.code}: {e.read().decode(errors='replace')[:400]}") from None
+
+
+def edit(s: Settings, clip: str, target: str, out: str, original: str = "", spans: list[list[float]] | None = None,
+         seed: int | None = None, takes: int = 1, controls: dict[str, float] | None = None, language: str = "",
+         plain_row: bool = False) -> str:
+    """The WAV `clip` re-said as `target` by the running server, into `out` (a WAV; further takes beside it). The
+    regions come from `spans` (seconds) or, without them, from the words that differ between `original` (the clip's
+    transcript) and `target`; `plain_row` leaves the clip's speaker embedding out of the prompt."""
+    body = {"model": s.served_name, "audio_base64": base64.b64encode(open(clip, "rb").read()).decode(), "target_text": target, "num_takes": takes}
+    if original:
+        body["original_text"] = original
+    if spans:
+        body["spans"] = spans
+    if seed is not None:
+        body["seed"] = seed
+    if controls:
+        body["controls"] = controls
+    if language:
+        body["language"] = language
+    if plain_row:
+        body["speaker_embedding"] = False
+    t0 = time.time()
+    reply = _post(s, "/audio/edit", body)
+    lines = []
+    for k, take in enumerate(reply["takes"]):
+        path = out if k == 0 else f"{out.rsplit('.', 1)[0]}.take{k + 1}.wav"
+        open(path, "wb").write(base64.b64decode(take["audio_base64"]))
+        regions = ", ".join(f"{a:.2f}-{b:.2f} s" for a, b in take["edited_regions"])
+        lines.append(f"{path}: {take['duration']:.2f} s, new audio at {regions}" + ("" if all(take["stopped"]) else " (a fill ran to its limit)"))
+    return "\n".join(lines) + f"\n{len(reply['spans'])} regions in {time.time() - t0:.2f} s"
+
+
+def align(s: Settings, clip: str, text: str, language: str = "") -> str:
+    """Where each word of `text` is spoken in the WAV `clip`: a line a word, start and end in seconds."""
+    body = {"model": s.served_name, "audio_base64": base64.b64encode(open(clip, "rb").read()).decode(), "text": text}
+    if language:
+        body["language"] = language
+    reply = _post(s, "/audio/edit/align", body)
+    return "\n".join(f"{w['start']:7.3f} {w['end']:7.3f}  {w['word']}" for w in reply["words"])
+
+
 def voices(s: Settings) -> str:
     with urllib.request.urlopen(s.url + "/voices", timeout=10) as r:
         return " ".join(json.load(r)["voices"])

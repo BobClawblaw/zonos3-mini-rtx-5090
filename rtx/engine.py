@@ -11,7 +11,7 @@ from .config import INCLUDE, LACI_DIR, SHORT_DIR, STEER_DIR, STEER_REPO, STEER_S
 
 # where tensorfold_sha lives until the family reaches TensorFold's main: a tag, since the PR branch is rebased
 TENSORFOLD_REPO = "https://github.com/BobClawblaw/TensorFold"
-TENSORFOLD_REF = "refs/tags/zonos3-openai-0b3c39654"
+TENSORFOLD_REF = "refs/tags/zonos3-openai-c47b77649"
 
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -20,7 +20,7 @@ def _run(cmd: list[str], cwd: Path | None = None) -> None:
 
 
 def fetch(s: Settings) -> Path:
-    """The release at its pinned revision: the 15 GB the server reads, without its GGUF and web builds."""
+    """The release at its pinned revision: the 16 GB the server reads, without its GGUF builds and all but one web build."""
     _run(["hf", "download", s.model_repo, "--revision", s.model_revision, "--local-dir", str(s.model), "--include", *INCLUDE])
     return s.model
 

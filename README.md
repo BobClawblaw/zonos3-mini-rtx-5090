@@ -5,11 +5,13 @@ released by [TensorFold](https://github.com/ashhart/TensorFold)'s native CUDA en
 OpenAI's speech API (`POST /v1/audio/speech`), so a program written for OpenAI's text to speech, such as Hermes
 Agent, uses it by changing its base URL. A browser test page comes up beside it.
 
-- **Nothing is converted.** The server reads the release folder as downloaded, pinned to revision `d2d142a8`.
+- **Nothing is converted.** The server reads the release folder as downloaded, pinned to revision `2921b882`.
 - **The engine is a branch under review**, not a TensorFold release (see "The engine").
 - **Four requests at once** (`parallel` in `recipe.toml`, 1 to 16). They share the card's speed; a fifth gets 503.
-- **No quality suite was run on this build.** The figures below are speed, repeatability and four transcribed
-  sentences.
+- **Speech editing** (`POST /v1/audio/edit`): part of a recorded clip re-said in the same voice. See "Speech
+  editing".
+- **No quality suite was run on this build.** The figures below are speed, repeatability and transcribed
+  replies.
 
 ## What it serves
 
@@ -34,6 +36,10 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   the controls that reshape the voice itself need (`identity.age`, `texture.deep`, `accents_en.british`).
   `control_spans` steer a range of the text's characters, `steer_hold` and its two times set how the push eases
   off, and `controls_cfg_scale` is guidance on the controls (embedding voices). See "Steering".
+
+- Speech editing: `POST /v1/audio/edit` takes a WAV clip, what it should say, and either what it says now or the
+  time spans to change, and answers the clip with those parts spoken again. `"speaker_mode": "embedding"` with
+  `ref_audio` speaks in a clip's voice by its speaker embedding. See "Speech editing".
 
 - LACI: `"laci": true` watches where the model is in its text as it speaks and regenerates the part where it
   skipped words, got stuck or stopped early. A text of one or two words is spoken better by default: it is
@@ -186,14 +192,67 @@ short-text registry of its Python package, from the same commit as the steering 
   five of the six replies without error; the one with a pronunciation group scored 0.2, where the reference text
   it is scored against holds the IPA and the markers.
 
+## Speech editing
+
+`POST /v1/audio/edit` re-says part of a recorded clip. The model generates the changed regions again with the rest
+of the clip as context, in the clip's voice, and the server splices them into the clip's own codec frames. It is
+the publisher's `/v2/edit`, on the speech-edit adapter the release ships; the engine's page
+(`docs/recipes/zonos3-mini.md`, "Speech editing") has the request's fields.
+
+```sh
+python3 -m rtx edit clip.wav "The quick brown cat jumps over the lazy dog." --text "The quick brown fox jumps over the lazy dog." -o edited.wav
+python3 -m rtx edit clip.wav "The quick brown cat jumps over the lazy dog." --span 1.2 1.9 --takes 3 -o edited.wav
+python3 -m rtx align clip.wav "The quick brown fox jumps over the lazy dog."
+```
+
+- **By transcript** (`--text`, `original_text`): the words that differ between what the clip says and the target
+  are re-said. The server finds each word in the clip with the publisher's aligner (clips up to 30 s).
+- **By time** (`--span`, `spans`): up to three regions in seconds.
+- **Takes** (`--takes`, `num_takes`): 1 to 4 versions; the audio before the first region is the same in each.
+- **Steering** (`--control`, `controls`, `region_controls`) applies to the new audio only.
+- **What it took here** (the `speech-edit` plan, clips the server spoke itself, at four requests at once):
+
+  | Edit | Clip | New audio | Time |
+  | --- | --- | --- | --- |
+  | one span | 4.9 s | 0.67 s | 1.02 to 1.04 s |
+  | two words changed, from the transcript | 4.9 s | 1.13 s and 0.60 s | 1.15 to 1.18 s |
+  | one word, with `delivery.whisper` | 4.9 s | 0.53 s | 1.09 to 1.10 s |
+  | one word, without the clip's speaker embedding | 4.9 s | 0.60 s | 0.65 s |
+  | a word at each end of the clip, on two windows | 20.7 s | 0.67 s and 0.53 s | 4.19 to 4.32 s |
+  | one word, two takes | 4.9 s | 0.53 s | 1.16 to 1.18 s |
+
+  Most of an edit's time is not the model: the clip is encoded, its speaker embedding is computed on the CPU (0.4 s
+  for 5 s of audio, 1.2 s for 18 s, 4.6 s for 60 s) and the whole edited clip is decoded. The first edit after a
+  start also loads the clip encoder (about 8 s) and the aligner (about 1 s).
+- **Checked** (the same plan): all six edits repeat byte for byte; each reply is as long as the clip with every
+  region replaced by its new audio; every fill ended on its own; an edit beside two spoken replies, and two edits
+  at once, each gave the bytes they give alone; eleven bad requests got 400. Whisper transcribed the six edited
+  clips against their target texts at a word error rate of 0.000 to 0.062. `/v1/audio/edit/align` placed all 16
+  and all 59 words of the two clips, in order, in 0.07 s and 0.43 s.
+- **Against the publisher's code** (the engine's page): on the same clip codes, eleven served edits have its
+  regions, windows, fill lengths and sample counts, at 59.9 to 66.0 dB against its audio; the aligner's word
+  times are within 1 ms of its own package's on the same weights.
+- **Limits:** WAV clips of at most 60 s (the publisher's servers take 150 s). Word timings from the server for
+  clips of at most 30 s; a longer clip needs `original_words` from the caller. No speech recognition, so an edit
+  by word diff needs the clip's transcript, and `verify` is refused. English, French, German, Spanish, Italian,
+  Portuguese and Korean; Japanese and Mandarin are refused. The aligner's weights are the publisher's 8-bit
+  export, the only ones it publishes.
+- **Not measured:** how natural the joins sound, or how often an edit says the wrong words beyond the six cases
+  above. The part of a clip outside its regions is the codec's decoding of the clip's own frames, not the
+  original samples: against the clip's samples it measured 7.6 to 9.8 dB, which is the codec's round trip and not
+  the edit.
+
 ## Memory
 
-The engine's own count of device memory, at the recipe's four requests at once: 7,577,534,976 bytes after load, and
-13,264,700,832 once a request with a clip has loaded the clip encoder and guided requests have made four second
-lanes. Each request at once past the first costs 1,236,862,976 bytes, so `parallel = 1` loads in 3,866,946,048 and
-`parallel = 8` in 12,524,986,880. cuBLAS's own allocations are outside that count; `nvidia-smi` showed the process
-at 7,946 MiB after the load at four at once. The `nvidia-smi` lines in `evidence/` include the second server that sat on the
-card. At four at once a card needs about 8 GiB free to speak and about 13.5 GiB to clone; at one, about 4.5 and 10.
+The engine's own count of device memory, at the recipe's four requests at once: 7,721,219,584 bytes after load
+(143,684,608 of them the speech-edit adapter), and 15,211,460,704 once an edit by transcript has loaded the clip
+encoder (5,643,510,688) and the aligner (1,846,591,492). Each request at once past the first costs 1,236,862,976
+bytes, so `parallel = 1` loads in 4,010,630,656 and `parallel = 8` in 12,668,671,488. Guided requests add
+10,913,792 bytes each for a second lane. cuBLAS's own allocations are outside that count; `nvidia-smi` showed the
+process at 8,096 MiB after the load at four at once and at 15,670 MiB after that edit. The `nvidia-smi` lines in
+`evidence/` include the second server that sat on the card. At four at once a card needs about 8.5 GiB free to
+speak, about 13.5 GiB to clone and about 16 GiB to edit by transcript; at one, about 4.5, 10 and 12. The speaker
+encoder runs on the CPU and takes host memory instead, about 1.5 GB for a 60 s clip.
 
 `python3 -m rtx up` checks that the card has room for the load before it starts, and says so when there is not
 enough left for cloning.
@@ -201,9 +260,9 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `0b3c39654`, kept as
-the tag `zonos3-openai-0b3c39654` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-eight changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `c47b77649`, kept as
+the tag `zonos3-openai-c47b77649` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+nine changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
@@ -216,7 +275,10 @@ eight changes not yet proposed upstream:
   deltas and moved embeddings are bit-identical and the greedy frames identical in five requests;
 - LACI, short texts and the phoneme, start and pause tokens (the same page, the sections of those names): the
   publisher's own replay fixtures pass, and on the model thirteen greedy requests, four of which retry eight times,
-  give its readings, masks, rows and records.
+  give its readings, masks, rows and records;
+- speech editing, the speaker encoder and the forced aligner (the same page, "Speech editing"): the publisher's
+  edit plans, prompts, fills and splices reproduced row for row on seven edits, the speaker embedding within 6e-6
+  of its encoder's, and word times within 1 ms of its aligner's on the same weights. No kernel was added.
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -240,7 +302,7 @@ the `hf` command; Rust 1.88 or later for text normalization.
 
 ```sh
 cp local.example.toml local.toml     # set zig, nvcc, cargo and where the release and a TensorFold clone live
-python3 -m rtx fetch                 # the release at its pin, 15 GB, into model_dir
+python3 -m rtx fetch                 # the release at its pin, 16 GB, into model_dir
 python3 -m rtx build                 # the pinned engine, the text normalizer, the steering bundle and the LACI heads, under ~/.cache/zonos3-mini
 python3 -m rtx validate
 python3 -m rtx up --foreground       # the API on :30117 and the test page on :30118; Ctrl-C stops both
@@ -257,6 +319,7 @@ python3 -m rtx say "The harbor was quiet this morning." -o reply.mp3 --voice rup
 python3 -m rtx say "Now in the clip's voice." -o cloned.wav --ref clip.wav
 python3 -m rtx say "I can hardly believe it." -o glad.wav --voice rupert --control mood.valence=2
 python3 -m rtx say "An older, deeper voice." -o older.wav --voice rupert --by-embedding --control identity.age=1.5 --control texture.deep=1
+python3 -m rtx edit reply.wav "The harbor was busy this morning." --text "The harbor was quiet this morning." -o edited.wav
 python3 -m rtx down
 ```
 
@@ -317,8 +380,10 @@ past the server's `parallel` gets 503.
 ## Checking it again
 
 The figures come from the [recipe harness](https://github.com/BobClawblaw/recipe-harness)'s `speech`,
-`speech-normalize`, `speech-controls`, `speech-concurrent`, `speech-steer` and `speech-laci` plans against the
-`zonos3-mini-5090` target; the runs' files and the spoken replies are in `evidence/`.
+`speech-normalize`, `speech-controls`, `speech-concurrent`, `speech-steer`, `speech-laci` and `speech-edit` plans
+against the `zonos3-mini-5090` target; the runs' files and the spoken replies are in `evidence/`. The first six
+were run again on this pin and passed, every reply byte-identical to the previous pin's; their figures here are the
+earlier runs'.
 
 ```sh
 git clone https://github.com/BobClawblaw/recipe-harness && cd recipe-harness
@@ -329,6 +394,7 @@ python3 -m harness run zonos3-mini-5090 --plan speech-controls
 python3 -m harness run zonos3-mini-5090 --plan speech-concurrent
 python3 -m harness run zonos3-mini-5090 --plan speech-steer
 python3 -m harness run zonos3-mini-5090 --plan speech-laci
+python3 -m harness run zonos3-mini-5090 --plan speech-edit
 ```
 
 Each plan starts its own server, so `python3 -m rtx down` first. The word error rate needs `tools/asr.py`'s packages

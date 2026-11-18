@@ -37,6 +37,21 @@ def main(argv: list[str] | None = None) -> int:
     say.add_argument("--laci", action="store_true", help="watch the reading of the text and regenerate a skip, a stall or an early end")
     say.add_argument("--start", action="store_true", help="speech from the first frame, with no silence before it")
     say.add_argument("--no-short-text", action="store_true", help="speak a text of a word or two as it is, without the filler sentence it is otherwise generated with")
+    ed = sub.add_parser("edit", help="re-say part of a recorded clip (a WAV of at most 60 s) with the running server")
+    ed.add_argument("clip")
+    ed.add_argument("target", help="what the clip should say after the edit")
+    ed.add_argument("-o", "--out", default="edited.wav")
+    ed.add_argument("--text", default="", help="what the clip says now: the words that differ from the target are re-said (clips up to 30 s)")
+    ed.add_argument("--span", action="append", nargs=2, type=float, default=[], metavar=("START", "END"), help="a region to re-say, in seconds; repeat for up to three")
+    ed.add_argument("--seed", type=int)
+    ed.add_argument("--takes", type=int, default=1, help="1 to 4 versions of the edit")
+    ed.add_argument("--control", action="append", default=[], metavar="NAME=DOSE", help="a steering control on the new audio; repeat for more")
+    ed.add_argument("--language", default="")
+    ed.add_argument("--plain-row", action="store_true", help="leave the clip's speaker embedding out of the prompt")
+    al = sub.add_parser("align", help="where each word of a transcript is spoken in a clip (a WAV of at most 30 s)")
+    al.add_argument("clip")
+    al.add_argument("text")
+    al.add_argument("--language", default="")
     sub.add_parser("voices", help="the running server's voice names")
     sub.add_parser("controls", help="the running server's steering controls, by kind")
     sub.add_parser("validate", help="check the settings, the release and the build without starting anything")
@@ -63,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         print("\n".join(s.log_file.read_text(errors="replace").splitlines()[-a.n:]) if s.log_file.exists() else "no log")
     elif a.cmd == "command":
         print(shlex.join(s.serve_args()))
-    elif a.cmd == "say":
+    elif a.cmd in ("say", "edit"):
         controls = {}
         for item in a.control:
             name, _, dose = item.partition("=")
@@ -71,7 +86,14 @@ def main(argv: list[str] | None = None) -> int:
                 controls[name] = float(dose)
             except ValueError:
                 raise SystemExit(f"--control {item}: write NAME=DOSE, the dose a number") from None
+        if a.cmd == "edit":
+            if not a.span and not a.text:
+                raise SystemExit("edit: give --text (what the clip says now) or --span START END")
+            print(serve.edit(s, a.clip, a.target, a.out, a.text, a.span, a.seed, a.takes, controls, a.language, a.plain_row))
+            return 0
         print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref, a.language, a.as_typed, a.rate, a.loudness, a.guidance, controls, a.by_embedding, a.controls_guidance, a.laci, a.start, a.no_short_text))
+    elif a.cmd == "align":
+        print(serve.align(s, a.clip, a.text, a.language))
     elif a.cmd == "voices":
         print(serve.voices(s))
     elif a.cmd == "controls":

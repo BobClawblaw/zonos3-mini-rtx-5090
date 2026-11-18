@@ -9,11 +9,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # what the server reads of the release, and the files that show a download is whole
-INCLUDE = ("lm/*", "autoencoder/*", "registries/*", "gguf/voices/*", "speaker_encoders/*", "README.md")
+INCLUDE = ("lm/*", "autoencoder/*", "registries/*", "gguf/voices/*", "speaker_encoders/*", "web/aligner/*", "README.md")
 NEEDED = ("lm/zonos3_mini/model.pth", "autoencoder/generator.pt", "autoencoder/teacher/model.safetensors", "gguf/voices")
 # device memory measured on an RTX 5090: after load, and once a request with a clip has loaded the clip encoder
 # the engine's own device bytes: the load at one request at once, each request at once past it, the clip encoder
-LOAD_BYTES = 3_861_963_008
+LOAD_BYTES = 4_010_630_656
 LANE_BYTES = 1_236_862_976
 CLIP_BYTES = 5_643_510_688
 # the libraries the server loads when a reply is first asked in their format:

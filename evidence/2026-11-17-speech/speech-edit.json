@@ -1,0 +1,287 @@
+{
+ "clips": {
+  "line": {
+   "status": 200,
+   "audio_s": 4.93
+  },
+  "long": {
+   "status": 200,
+   "audio_s": 20.73
+  }
+ },
+ "cases": {
+  "by-span": {
+   "status": 200,
+   "first_request_s": 9.166,
+   "regions": 1,
+   "spans": [
+    [
+     1.2,
+     1.9333333333333333
+    ]
+   ],
+   "windows": 0,
+   "fill_seconds": [
+    0.6666666666666666
+   ],
+   "stopped": [
+    true
+   ],
+   "audio_s": 4.87,
+   "edit_s": [
+    1.018,
+    1.039
+   ],
+   "repeat_identical": true,
+   "length_as_planned": true,
+   "words": 0,
+   "before_first_region_snr_db": 9.7,
+   "wer": 0.062
+  },
+  "by-transcript": {
+   "status": 200,
+   "first_request_s": 2.473,
+   "regions": 2,
+   "spans": [
+    [
+     0.6666666666666666,
+     1.6
+    ],
+    [
+     3.7333333333333334,
+     4.4
+    ]
+   ],
+   "windows": 0,
+   "fill_seconds": [
+    1.1333333333333333,
+    0.6
+   ],
+   "stopped": [
+    true,
+    true
+   ],
+   "audio_s": 5.07,
+   "edit_s": [
+    1.154,
+    1.18
+   ],
+   "repeat_identical": true,
+   "length_as_planned": true,
+   "words": 16,
+   "before_first_region_snr_db": 7.6,
+   "wer": 0.0
+  },
+  "steered": {
+   "status": 200,
+   "first_request_s": 1.084,
+   "regions": 1,
+   "spans": [
+    [
+     2.1333333333333333,
+     2.6666666666666665
+    ]
+   ],
+   "windows": 0,
+   "fill_seconds": [
+    0.5333333333333333
+   ],
+   "stopped": [
+    true
+   ],
+   "audio_s": 4.93,
+   "edit_s": [
+    1.094,
+    1.101
+   ],
+   "repeat_identical": true,
+   "length_as_planned": true,
+   "words": 16,
+   "before_first_region_snr_db": 8.4,
+   "wer": 0.0
+  },
+  "plain-row": {
+   "status": 200,
+   "first_request_s": 0.642,
+   "regions": 1,
+   "spans": [
+    [
+     1.3333333333333333,
+     2.0
+    ]
+   ],
+   "windows": 0,
+   "fill_seconds": [
+    0.6
+   ],
+   "stopped": [
+    true
+   ],
+   "audio_s": 4.87,
+   "edit_s": [
+    0.645,
+    0.646
+   ],
+   "repeat_identical": true,
+   "length_as_planned": true,
+   "words": 16,
+   "before_first_region_snr_db": 9.8,
+   "wer": 0.0
+  },
+  "windows": {
+   "status": 200,
+   "first_request_s": 4.383,
+   "regions": 2,
+   "spans": [
+    [
+     1.0,
+     1.6666666666666667
+    ],
+    [
+     19.133333333333333,
+     19.666666666666668
+    ]
+   ],
+   "windows": 2,
+   "fill_seconds": [
+    0.6666666666666666,
+    0.5333333333333333
+   ],
+   "stopped": [
+    true,
+    true
+   ],
+   "audio_s": 20.73,
+   "edit_s": [
+    4.19,
+    4.316
+   ],
+   "repeat_identical": true,
+   "length_as_planned": true,
+   "words": 59,
+   "before_first_region_snr_db": 9.2,
+   "wer": 0.017
+  },
+  "two-takes": {
+   "status": 200,
+   "first_request_s": 1.152,
+   "regions": 1,
+   "spans": [
+    [
+     4.466666666666667,
+     4.933333333333334
+    ]
+   ],
+   "windows": 0,
+   "fill_seconds": [
+    0.5333333333333333
+   ],
+   "stopped": [
+    true
+   ],
+   "audio_s": 5.0,
+   "edit_s": [
+    1.156,
+    1.178
+   ],
+   "repeat_identical": true,
+   "length_as_planned": true,
+   "words": 16,
+   "before_first_region_snr_db": 8.9,
+   "wer": 0.0
+  }
+ },
+ "refusals": {
+  "no-target": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: target_text is required\", \"type\": \"invalid_request_error\"}}"
+  },
+  "no-clip": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: audio_base64 is required\", \"type\": \"invalid_request_error\"}}"
+  },
+  "same-text": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: target text equals the original transcript\", \"type\": \"invalid_request_error\"}}"
+  },
+  "no-transcript": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: this edit reads the clip's words: send the clip's transcript as original_text (no speech recognition is served)\", \"type\": \"invalid_request_error\"}}"
+  },
+  "spans-out-of-order": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: edit spans must be one to 3, ascending, separated and within the audio\", \"type\": \"invalid_request_error\"}}"
+  },
+  "four-regions": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: edit spans must be one to 3, ascending, separated and within the audio\", \"type\": \"invalid_request_error\"}}"
+  },
+  "pause-marker-in-target": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: target_text takes no start or pause markers: remove U+E002 and U+E003 to U+E00A\", \"type\": \"invalid_request_error\"}}"
+  },
+  "verify-needs-recognition": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: verify needs speech recognition, which is not served: set verify to false\", \"type\": \"invalid_request_error\"}}"
+  },
+  "japanese": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: speech editing serves en_us, en_gb, fr_fr, de, es, it, pt_br and ko (ja and cmn need ICU word breaks, which are not served)\", \"type\": \"invalid_request_error\"}}"
+  },
+  "region-controls-without-spans": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: region_controls needs explicit spans (one entry per span)\", \"type\": \"invalid_request_error\"}}"
+  },
+  "align-without-text": {
+   "status": 400,
+   "message": "{\"error\": {\"message\": \"ZONOS3 edit: text is required\", \"type\": \"invalid_request_error\"}}"
+  }
+ },
+ "align": {
+  "line": {
+   "status": 200,
+   "words": 16,
+   "said": 16,
+   "ordered": true,
+   "inside_the_clip": true,
+   "repeat_identical": true,
+   "s": [
+    0.078,
+    0.071
+   ],
+   "least_confidence": 1.0
+  },
+  "long": {
+   "status": 200,
+   "words": 59,
+   "said": 59,
+   "ordered": true,
+   "inside_the_clip": true,
+   "repeat_identical": true,
+   "s": [
+    0.432,
+    0.43
+   ],
+   "least_confidence": 0.998
+  }
+ },
+ "together": [
+  {
+   "cases": [
+    "by-span",
+    "line",
+    "long"
+   ],
+   "identical": 3,
+   "wall_s": 1.219
+  },
+  {
+   "cases": [
+    "by-transcript",
+    "windows"
+   ],
+   "identical": 2,
+   "wall_s": 4.37
+  }
+ ]
+}
