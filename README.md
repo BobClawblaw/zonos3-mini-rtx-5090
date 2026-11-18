@@ -277,9 +277,9 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `a82f4d8c5`, kept as
-the tag `zonos3-openai-a82f4d8c5` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-eleven changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `67416632d`, kept as
+the tag `zonos3-openai-67416632d` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+twelve changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
@@ -302,7 +302,9 @@ eleven changes not yet proposed upstream:
 - the full-size `full_mr` decoder on request, and the decoder's attention caches as rings (the same page, "The two
   decoders"): `full_mr`'s 13 capture points and audio equal to the publisher's decode (118.3 dB), served replies
   matching its audio at 66 to 68 dB; `keep2_plain` replies byte-identical to the previous pin's. Two kernels gained
-  a ring-size argument and pass the kernel contract with rings that wrap.
+  a ring-size argument and pass the kernel contract with rings that wrap;
+- the test page's inputs for every feature above and its speech-editing tab (the same page, "A test page"),
+  driven in headless Chromium against the served build. No engine code changed.
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
@@ -332,8 +334,10 @@ python3 -m rtx validate
 python3 -m rtx up --foreground       # the API on :30117 and the test page on :30118; Ctrl-C stops both
 ```
 
-Then open `http://127.0.0.1:30118/`: the page lists the voices, speaks what you type with a seed and the sampling
-fields, keeps each take with a player and its timing, and clones a voice from an audio file you pick.
+Then open `http://127.0.0.1:30118/`. The page speaks what you type with any voice or one cloned from an audio file
+you pick, and has inputs for everything the server serves: sampling, language, conditions, guidance, LACI, short
+texts, pauses (`<0.5s>`) and pronunciations (`[[phones]]`), steering controls on the whole reply or on selected
+words, and the decoder. Its second tab edits a recording, or any take, by its new text or by the seconds to replace.
 
 Without `--foreground`, `up` starts both in the background and returns:
 
