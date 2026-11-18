@@ -1,200 +1,208 @@
 {
- "cases": {
-  "plain": {
-   "status": 200,
-   "first_request_s": 0.268,
-   "bytes": 476280,
-   "audio_s": 5.4,
-   "whole_s": [
-    0.163,
-    0.165
-   ],
-   "times_real_time": 33.1,
-   "stream_first_byte_s": [
-    0.034,
-    0.035
-   ],
-   "stream_s": [
-    0.164,
-    0.166
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
+ "ok": true,
+ "summary": "6/6 cases spoken; 31.1-36.4 times real time (31.3 s of audio), streamed first byte 0.02-0.04 s; repeats identical 6/6, streamed identical 6/6; WER 0.000-0.118; same audio 4/4; refusals 6/6",
+ "metrics": {
+  "cases": {
+   "plain": {
+    "status": 200,
+    "first_request_s": 0.273,
+    "bytes": 476280,
+    "audio_s": 5.4,
+    "whole_s": [
+     0.164,
+     0.165
+    ],
+    "times_real_time": 32.9,
+    "stream_first_byte_s": [
+     0.034,
+     0.035
+    ],
+    "stream_s": [
+     0.164,
+     0.166
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "steered": {
+    "status": 200,
+    "first_request_s": 0.17,
+    "bytes": 488040,
+    "audio_s": 5.53,
+    "whole_s": [
+     0.168,
+     0.169
+    ],
+    "times_real_time": 32.9,
+    "stream_first_byte_s": [
+     0.034,
+     0.035
+    ],
+    "stream_s": [
+     0.168,
+     0.171
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.118
+   },
+   "embedding": {
+    "status": 200,
+    "first_request_s": 0.145,
+    "bytes": 458640,
+    "audio_s": 5.2,
+    "whole_s": [
+     0.143,
+     0.143
+    ],
+    "times_real_time": 36.4,
+    "stream_first_byte_s": [
+     0.02,
+     0.021
+    ],
+    "stream_s": [
+     0.142,
+     0.143
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "reshaped": {
+    "status": 200,
+    "first_request_s": 0.136,
+    "bytes": 429240,
+    "audio_s": 4.87,
+    "whole_s": [
+     0.135,
+     0.136
+    ],
+    "times_real_time": 36.0,
+    "stream_first_byte_s": [
+     0.02,
+     0.021
+    ],
+    "stream_s": [
+     0.135,
+     0.136
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "span": {
+    "status": 200,
+    "first_request_s": 0.149,
+    "bytes": 464520,
+    "audio_s": 5.27,
+    "whole_s": [
+     0.145,
+     0.146
+    ],
+    "times_real_time": 36.3,
+    "stream_first_byte_s": [
+     0.02,
+     0.021
+    ],
+    "stream_s": [
+     0.145,
+     0.146
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   },
+   "guided": {
+    "status": 200,
+    "first_request_s": 0.164,
+    "bytes": 441000,
+    "audio_s": 5.0,
+    "whole_s": [
+     0.161,
+     0.163
+    ],
+    "times_real_time": 31.1,
+    "stream_first_byte_s": [
+     0.025,
+     0.026
+    ],
+    "stream_s": [
+     0.161,
+     0.162
+    ],
+    "repeat_identical": true,
+    "stream_identical": true,
+    "wer": 0.0
+   }
   },
-  "steered": {
-   "status": 200,
-   "first_request_s": 0.168,
-   "bytes": 488040,
-   "audio_s": 5.53,
-   "whole_s": [
-    0.167,
-    0.168
-   ],
-   "times_real_time": 33.1,
-   "stream_first_byte_s": [
-    0.034,
-    0.035
-   ],
-   "stream_s": [
-    0.169,
-    0.169
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.118
+  "refusals": {
+   "control-unknown": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: unknown control 'mood.nope'; see /v1/audio/controls\", \"type\": \"invalid_request_error\"}}"
+   },
+   "voice-control-on-a-reference-voice": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: control 'identity.age' moves the speaker embedding and needs a voice by embedding (speaker_mode \\\"embedding\\\")\", \"type\": \"invalid_request_error\"}}"
+   },
+   "span-outside-the-text": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: control span [5, 9) is outside the text (0..1)\", \"type\": \"invalid_request_error\"}}"
+   },
+   "two-guidances": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: speaker_cfg_scale and controls_cfg_scale cannot be combined: a request has one guidance twin\", \"type\": \"invalid_request_error\"}}"
+   },
+   "span-lead-out-of-range": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: control_span_lead must be from 0 through 8 tokens\", \"type\": \"invalid_request_error\"}}"
+   },
+   "hold-above-one": {
+    "status": 400,
+    "message": "{\"error\": {\"message\": \"ZONOS3 request: steer_hold must be from 0 through 1, and steer_onset_seconds and steer_ramp_seconds finite and not negative\", \"type\": \"invalid_request_error\"}}"
+   }
   },
-  "embedding": {
-   "status": 200,
-   "first_request_s": 0.143,
-   "bytes": 458640,
-   "audio_s": 5.2,
-   "whole_s": [
-    0.142,
-    0.144
-   ],
-   "times_real_time": 36.6,
-   "stream_first_byte_s": [
-    0.02,
-    0.021
-   ],
-   "stream_s": [
-    0.142,
-    0.143
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
+  "same": {
+   "dose-zero-is-off": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   },
+   "controls-guidance-one-is-off": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   },
+   "span-rate-one-is-the-default": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   },
+   "hold-one-on-an-exempt-control-changes-nothing": {
+    "statuses": [
+     200,
+     200,
+     200
+    ],
+    "equal": true,
+    "other_differs": true
+   }
   },
-  "reshaped": {
-   "status": 200,
-   "first_request_s": 0.134,
-   "bytes": 429240,
-   "audio_s": 4.87,
-   "whole_s": [
-    0.134,
-    0.135
-   ],
-   "times_real_time": 36.3,
-   "stream_first_byte_s": [
-    0.02,
-    0.022
-   ],
-   "stream_s": [
-    0.136,
-    0.138
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
-  },
-  "span": {
-   "status": 200,
-   "first_request_s": 0.148,
-   "bytes": 464520,
-   "audio_s": 5.27,
-   "whole_s": [
-    0.145,
-    0.145
-   ],
-   "times_real_time": 36.3,
-   "stream_first_byte_s": [
-    0.02,
-    0.021
-   ],
-   "stream_s": [
-    0.145,
-    0.147
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
-  },
-  "guided": {
-   "status": 200,
-   "first_request_s": 0.162,
-   "bytes": 441000,
-   "audio_s": 5.0,
-   "whole_s": [
-    0.161,
-    0.163
-   ],
-   "times_real_time": 31.1,
-   "stream_first_byte_s": [
-    0.025,
-    0.026
-   ],
-   "stream_s": [
-    0.161,
-    0.162
-   ],
-   "repeat_identical": true,
-   "stream_identical": true,
-   "wer": 0.0
-  }
+  "failures": []
  },
- "refusals": {
-  "control-unknown": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: unknown control 'mood.nope'; see /v1/audio/controls\", \"type\": \"invalid_request_error\"}}"
-  },
-  "voice-control-on-a-reference-voice": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: control 'identity.age' moves the speaker embedding and needs a voice by embedding (speaker_mode \\\"embedding\\\")\", \"type\": \"invalid_request_error\"}}"
-  },
-  "span-outside-the-text": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: control span [5, 9) is outside the text (0..1)\", \"type\": \"invalid_request_error\"}}"
-  },
-  "two-guidances": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: speaker_cfg_scale and controls_cfg_scale cannot be combined: a request has one guidance twin\", \"type\": \"invalid_request_error\"}}"
-  },
-  "spans-by-reading-position": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: control_span_follow \\\"reading\\\" needs the alignment heads, which are not served; spans are placed by control_span_rate\", \"type\": \"invalid_request_error\"}}"
-  },
-  "hold-above-one": {
-   "status": 400,
-   "message": "{\"error\": {\"message\": \"ZONOS3 request: steer_hold must be from 0 through 1, and steer_onset_seconds and steer_ramp_seconds finite and not negative\", \"type\": \"invalid_request_error\"}}"
-  }
- },
- "same": {
-  "dose-zero-is-off": {
-   "statuses": [
-    200,
-    200,
-    200
-   ],
-   "equal": true,
-   "other_differs": true
-  },
-  "controls-guidance-one-is-off": {
-   "statuses": [
-    200,
-    200,
-    200
-   ],
-   "equal": true,
-   "other_differs": true
-  },
-  "span-rate-one-is-the-default": {
-   "statuses": [
-    200,
-    200,
-    200
-   ],
-   "equal": true,
-   "other_differs": true
-  },
-  "hold-one-on-an-exempt-control-changes-nothing": {
-   "statuses": [
-    200,
-    200,
-    200
-   ],
-   "equal": true,
-   "other_differs": true
-  }
- }
+ "name": "speech",
+ "type": "speech",
+ "seconds": 33.3
 }

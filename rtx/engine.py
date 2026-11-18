@@ -11,7 +11,7 @@ from .config import INCLUDE, LACI_DIR, SHORT_DIR, STEER_DIR, STEER_REPO, STEER_S
 
 # where tensorfold_sha lives until the family reaches TensorFold's main: a tag, since the PR branch is rebased
 TENSORFOLD_REPO = "https://github.com/BobClawblaw/TensorFold"
-TENSORFOLD_REF = "refs/tags/zonos3-openai-c47b77649"
+TENSORFOLD_REF = "refs/tags/zonos3-openai-0a1a216c3"
 
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:

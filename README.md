@@ -48,10 +48,9 @@ Agent, uses it by changing its base URL. A browser test page comes up beside it.
   (or `"start_immediately": true`: speech from the first frame) and pronunciation groups in IPA. See "LACI, short
   texts and markers".
 
-Not served: steering spans placed by the model's reading position (`control_span_follow: "reading"`), a speaker
-embedding made from a clip, LACI's duration targets, speech editing, accent
-adapters, phoneme, start and pause tokens, and the release's `full_mr` decoder (the server uses `keep2_plain`, the
-reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
+Not served: LACI's duration targets, accent adapters (Zyphra has published none for this model: its guide's adapters
+were trained on an earlier backbone kept in its private repository), and the release's `full_mr` decoder (the server
+uses `keep2_plain`, the reference servers' default). `speed` and `instructions` are refused: the model has no such controls.
 
 Arithmetic is fp32 throughout, checked against the publisher's code run in fp32 with exact gates. The publisher's
 CUDA servers run the codec in bf16, so the codes this port encodes from a clip are not bit for bit the ones their
@@ -158,7 +157,13 @@ serves without it, and `controls` are then refused. `GET /v1/audio/controls` lis
 - **Checked** (the `speech-steer` plan): all six cases repeat byte for byte and stream the same bytes; a dose of 0,
   controls guidance 1, a span rate of 1 and a hold of 1 on an exempt control each gave the bytes of the request
   without them, and other bytes than their counterpart; an unknown control, a voice control on a reference voice, a
-  span outside the text, both guidances at once, spans by reading position and a hold above 1 each got 400.
+  span outside the text, both guidances at once, a span lead above 8 and a hold above 1 each got 400.
+- **Spans that follow the reading.** `"control_span_follow": "reading"` places `control_spans` by where the model
+  is in its text (read with the LACI heads, so the server needs them) instead of by an estimated character rate;
+  `control_span_lead` and `control_span_lag` (in text tokens, default 1 and 0) move where a span starts and ends.
+  On six test requests the frames, every reading and every frame's span weights equal the publisher's code; served,
+  they match its audio at 64 to 74 dB (the engine's page has the details). The `speech-laci` plan's two such cases
+  (alone and under LACI) repeat byte for byte, stream the same bytes, and ran at 36.1 times real time.
 - **Cost:** a steered reply ran at 33.1 times real time, as the plain one did. Guidance on the controls runs the
   model twice a frame (31.1 against 36.6 for that voice plain).
 - **What was not measured: whether a control sounds like its name.** The engine's page shows the port adds exactly
@@ -260,9 +265,9 @@ enough left for cloning.
 ## The engine
 
 The `zonos3` family is not in TensorFold's main yet: it is draft pull request
-[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `c47b77649`, kept as
-the tag `zonos3-openai-c47b77649` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
-nine changes not yet proposed upstream:
+[ashhart/TensorFold#3720](https://github.com/ashhart/TensorFold/pull/3720). The recipe pins commit `0a1a216c3`, kept as
+the tag `zonos3-openai-0a1a216c3` on github.com/BobClawblaw/TensorFold. That commit is the pull request's branch plus
+ten changes not yet proposed upstream:
 
 - MP3, Opus, AAC and FLAC replies and the sample rate on raw PCM (`docs/speech-formats.md` in the pinned commit);
 - OpenAI's stock voice names (`alloy`, `nova`, ...) speaking in the default voice;
@@ -278,7 +283,10 @@ nine changes not yet proposed upstream:
   give its readings, masks, rows and records;
 - speech editing, the speaker encoder and the forced aligner (the same page, "Speech editing"): the publisher's
   edit plans, prompts, fills and splices reproduced row for row on seven edits, the speaker embedding within 6e-6
-  of its encoder's, and word times within 1 ms of its aligner's on the same weights. No kernel was added.
+  of its encoder's, and word times within 1 ms of its aligner's on the same weights. No kernel was added;
+- steering spans that follow the reading position (the same page, "Spans that follow the reading"): on six greedy
+  requests, one retried eight times under LACI, every reading, every frame's span weights and the frames equal the
+  publisher's code, and its three follower replay fixtures pass. No kernel was added.
 
 In the pull request: the backbone, the codec decoder and the clip encoder as 40 CUDA kernels, each registered with
 the kernel contract (`41 kernels: 41 pass gates 1-4, 0 fail, 0 known findings; 41 controls: 41 red as planted, 0
