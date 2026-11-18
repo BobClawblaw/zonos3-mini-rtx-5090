@@ -26,6 +26,11 @@ TEXTNORM_REPO = "https://github.com/Zyphra/zyphra-textnorm"
 TEXTNORM_SHA = "170c571e75034c9a9f3bece9885c36d8dae77df2"
 TEXTNORM_RUST = (1, 88)
 TEXTNORM_VAR = "TENSORFOLD_LIBZYPHRA_TEXTNORM"
+# the steering bundle: direction vectors Zyphra keeps in its code repository (MIT), not in the release
+STEER_REPO = "https://github.com/Zyphra/ZONOS3-Mini"
+STEER_SHA = "96d9e0ec1e39083ed336ac78f24e3dbc93721c0f"
+STEER_DIR = "assets/steering"
+STEER_BUNDLE = "studio_bundle_mect60k_x10.json"
 
 
 @dataclass
@@ -48,6 +53,8 @@ class Settings:
     tf_cache: str = "~/.cache/zonos3-mini"
     parallel: int = 4
     api_key: str = ""
+    steer: bool = True
+    steer_bundle: str = ""
     extra_args: str = ""
 
     @staticmethod
@@ -126,11 +133,25 @@ class Settings:
     def page_url(self) -> str:
         return f"http://{'127.0.0.1' if self.page_bind in ('0.0.0.0', '') else self.page_bind}:{self.page_port}/"
 
+    @property
+    def steer_src(self) -> Path:
+        """Where `build` checks out the publisher's steering folder."""
+        return self.cache / "steering" / STEER_SHA[:12]
+
+    @property
+    def bundle(self) -> Path | None:
+        """The steering bundle the server loads: steer_bundle when set, else the one `build` fetched; None: steer is off."""
+        if not self.steer:
+            return None
+        return self.path(self.steer_bundle) if self.steer_bundle else self.steer_src / STEER_DIR / STEER_BUNDLE
+
     def serve_args(self) -> list[str]:
         a = [str(self.run_binary), "serve", str(self.model), "--name", self.served_name, "--host", self.host, "--port", str(self.port),
              "--parallel", str(self.parallel), "--no-update-check"]
         if self.api_key:
             a += ["--api-key", self.api_key]
+        if self.bundle is not None:
+            a += ["--steer-bundle", str(self.bundle)]
         return a + self.extra_args.split()
 
     def page_args(self) -> list[str]:
@@ -182,6 +203,8 @@ def validate(s: Settings) -> list[str]:
         out.append(f"no engine binary at {s.run_binary}: python3 -m rtx build")
     if s.page_port and not s.binary and s.built_binary.exists() and not s.page_script.exists():
         out.append(f"no test page at {s.page_script}: the pinned engine should hold it")
+    if s.bundle is not None and not s.bundle.exists():
+        out.append(f"no steering bundle at {s.bundle}: python3 -m rtx build fetches it (or steer = false)")
     if not 1 <= s.parallel <= 16:
         out.append(f"parallel = {s.parallel}: the server takes 1 to 16 requests at once")
     if s.host not in ("127.0.0.1", "localhost") and not s.api_key:

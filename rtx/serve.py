@@ -158,10 +158,12 @@ def status(s: Settings) -> str:
 
 
 def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = None, ref: str = "", language: str = "",
-        as_typed: bool = False, rate: float | None = None, loudness: float | None = None, guidance: float | None = None) -> str:
+        as_typed: bool = False, rate: float | None = None, loudness: float | None = None, guidance: float | None = None,
+        controls: dict[str, float] | None = None, by_embedding: bool = False, controls_guidance: float | None = None) -> str:
     """`text` spoken by the running server into `out`, whose extension picks the format; `ref` is a WAV clip to clone,
     `language` the normalizer's grammar, `as_typed` turns normalization off; `rate` (UTF-8 bytes of text a second)
-    and `loudness` (LUFS) are condition values, `guidance` the speaker guidance scale."""
+    and `loudness` (LUFS) are condition values, `guidance` the speaker guidance scale; `controls` are steering doses
+    by name, `by_embedding` speaks the voice by its speaker embedding, `controls_guidance` is guidance on the controls."""
     fmt = EXT.get(out.rsplit(".", 1)[-1].lower())
     if fmt is None:
         raise SystemExit(f"{out}: the extension must be one of {', '.join(sorted(EXT))}")
@@ -179,6 +181,12 @@ def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = No
         body["condition_values"] = values
     if guidance is not None:
         body["speaker_cfg_scale"] = guidance
+    if controls:
+        body["controls"] = controls
+    if by_embedding:
+        body["speaker_mode"] = "embedding"
+    if controls_guidance is not None:
+        body["controls_cfg_scale"] = controls_guidance
     if ref:
         body["ref_audio"] = base64.b64encode(open(ref, "rb").read()).decode()
     headers = {"content-type": "application/json", **({"authorization": f"Bearer {s.api_key}"} if s.api_key else {})}
@@ -196,3 +204,16 @@ def say(s: Settings, text: str, out: str, voice: str = "", seed: int | None = No
 def voices(s: Settings) -> str:
     with urllib.request.urlopen(s.url + "/voices", timeout=10) as r:
         return " ".join(json.load(r)["voices"])
+
+
+def controls(s: Settings) -> str:
+    """The steering controls of the running server: those that work on any voice, then those that move the voice."""
+    try:
+        with urllib.request.urlopen(s.url + "/audio/controls", timeout=10) as r:
+            doc = json.load(r)
+    except urllib.error.HTTPError as e:
+        raise SystemExit("this server has no steering bundle (steer = true, then build and up)" if e.code == 404 else f"{e.code}") from None
+    kinds = {"hidden": [], "speaker_embedding": []}
+    for name, d in doc["directions"].items():
+        kinds[d["space"]].append(name)
+    return ("any voice: " + " ".join(kinds["hidden"]) + "\nwith --by-embedding: " + " ".join(kinds["speaker_embedding"]))

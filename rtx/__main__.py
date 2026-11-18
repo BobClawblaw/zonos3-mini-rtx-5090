@@ -1,4 +1,4 @@
-"""python3 -m rtx fetch|build|up|down|status|logs|command|say|voices|validate|systemd"""
+"""python3 -m rtx fetch|build|up|down|status|logs|command|say|voices|controls|validate|systemd"""
 
 import argparse
 import shlex
@@ -31,7 +31,11 @@ def main(argv: list[str] | None = None) -> int:
     say.add_argument("--rate", type=float, help="speaking rate, in UTF-8 bytes of text a second (about 6 to 30; slower is lower)")
     say.add_argument("--loudness", type=float, help="loudness in LUFS (about -30 to -16)")
     say.add_argument("--guidance", type=float, help="speaker guidance scale: 1 is off, above 1 follows the voice harder")
+    say.add_argument("--control", action="append", default=[], metavar="NAME=DOSE", help="a steering control, as `controls` lists them (mood.valence=2); repeat for more")
+    say.add_argument("--by-embedding", action="store_true", help="speak the voice by its speaker embedding: what the controls that move the voice need")
+    say.add_argument("--controls-guidance", type=float, help="guidance scale on the controls (with --by-embedding): 1 is off")
     sub.add_parser("voices", help="the running server's voice names")
+    sub.add_parser("controls", help="the running server's steering controls, by kind")
     sub.add_parser("validate", help="check the settings, the release and the build without starting anything")
     sub.add_parser("systemd", help="write the systemd user unit (not enabled) that keeps `up --foreground` running")
     a = p.parse_args(argv)
@@ -40,7 +44,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"release {engine.fetch(s)}")
     elif a.cmd == "build":
         engine.build(s, rebuild=a.rebuild)
-        print(f"engine {s.run_binary}" + (f"\ntext normalizer {s.textnorm_lib}" if s.textnorm_lib.exists() else ""))
+        print(f"engine {s.run_binary}" + (f"\ntext normalizer {s.textnorm_lib}" if s.textnorm_lib.exists() else "")
+              + (f"\nsteering bundle {s.bundle}" if s.bundle is not None and s.bundle.exists() else ""))
     elif a.cmd == "up":
         problems = config.validate(s)
         if problems:
@@ -55,9 +60,18 @@ def main(argv: list[str] | None = None) -> int:
     elif a.cmd == "command":
         print(shlex.join(s.serve_args()))
     elif a.cmd == "say":
-        print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref, a.language, a.as_typed, a.rate, a.loudness, a.guidance))
+        controls = {}
+        for item in a.control:
+            name, _, dose = item.partition("=")
+            try:
+                controls[name] = float(dose)
+            except ValueError:
+                raise SystemExit(f"--control {item}: write NAME=DOSE, the dose a number") from None
+        print(serve.say(s, a.text, a.out, a.voice, a.seed, a.ref, a.language, a.as_typed, a.rate, a.loudness, a.guidance, controls, a.by_embedding, a.controls_guidance))
     elif a.cmd == "voices":
         print(serve.voices(s))
+    elif a.cmd == "controls":
+        print(serve.controls(s))
     elif a.cmd == "validate":
         problems = config.validate(s)
         print("\n".join(problems) if problems else f"ok: {s.served_name} from {s.model} with {s.run_binary} at {s.url}")

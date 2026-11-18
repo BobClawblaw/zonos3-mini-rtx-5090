@@ -2,21 +2,21 @@
  "cases": {
   "passage": {
    "status": 200,
-   "first_request_s": 0.583,
+   "first_request_s": 0.582,
    "bytes": 1569960,
    "audio_s": 17.8,
    "whole_s": [
-    0.476,
-    0.476
+    0.477,
+    0.477
    ],
-   "times_real_time": 37.4,
+   "times_real_time": 37.3,
    "stream_first_byte_s": [
-    0.036,
-    0.036
+    0.038,
+    0.038
    ],
    "stream_s": [
-    0.476,
-    0.476
+    0.479,
+    0.479
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -28,17 +28,17 @@
    "bytes": 364560,
    "audio_s": 4.13,
    "whole_s": [
-    0.129,
-    0.129
+    0.128,
+    0.128
    ],
-   "times_real_time": 32.0,
+   "times_real_time": 32.3,
    "stream_first_byte_s": [
-    0.033,
-    0.033
+    0.032,
+    0.032
    ],
    "stream_s": [
-    0.13,
-    0.13
+    0.128,
+    0.128
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -46,21 +46,21 @@
   },
   "guided": {
    "status": 200,
-   "first_request_s": 0.17,
+   "first_request_s": 0.173,
    "bytes": 429240,
    "audio_s": 4.87,
    "whole_s": [
-    0.171,
-    0.171
+    0.169,
+    0.169
    ],
-   "times_real_time": 28.5,
+   "times_real_time": 28.8,
    "stream_first_byte_s": [
     0.038,
     0.038
    ],
    "stream_s": [
-    0.171,
-    0.171
+    0.17,
+    0.17
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -68,21 +68,21 @@
   },
   "rate": {
    "status": 200,
-   "first_request_s": 0.161,
+   "first_request_s": 0.163,
    "bytes": 476280,
    "audio_s": 5.4,
    "whole_s": [
-    0.161,
-    0.161
+    0.163,
+    0.163
    ],
-   "times_real_time": 33.5,
+   "times_real_time": 33.1,
    "stream_first_byte_s": [
     0.033,
     0.033
    ],
    "stream_s": [
-    0.162,
-    0.162
+    0.163,
+    0.163
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -90,21 +90,21 @@
   },
   "clone": {
    "status": 200,
-   "first_request_s": 8.776,
+   "first_request_s": 8.708,
    "bytes": 452760,
    "audio_s": 5.13,
    "whole_s": [
-    0.735,
-    0.735
+    0.698,
+    0.698
    ],
-   "times_real_time": 7.0,
+   "times_real_time": 7.4,
    "stream_first_byte_s": [
-    0.604,
-    0.604
+    0.58,
+    0.58
    ],
    "stream_s": [
-    0.725,
-    0.725
+    0.701,
+    0.701
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -112,21 +112,21 @@
   },
   "guided-clone": {
    "status": 200,
-   "first_request_s": 0.682,
+   "first_request_s": 0.664,
    "bytes": 235200,
    "audio_s": 2.67,
    "whole_s": [
-    0.675,
-    0.675
+    0.651,
+    0.651
    ],
-   "times_real_time": 4.0,
+   "times_real_time": 4.1,
    "stream_first_byte_s": [
-    0.614,
-    0.614
+    0.584,
+    0.584
    ],
    "stream_s": [
-    0.685,
-    0.685
+    0.655,
+    0.655
    ],
    "repeat_identical": true,
    "stream_identical": true,
@@ -139,8 +139,8 @@
    200,
    200,
    200,
-   503,
    200,
+   503,
    503
   ],
   "identical": 4
@@ -161,9 +161,9 @@
    ],
    "identical": 4,
    "audio_s": 32.2,
-   "wall_s": 0.726,
-   "times_real_time": 44.3,
-   "slowest_s": 0.726
+   "wall_s": 0.729,
+   "times_real_time": 44.2,
+   "slowest_s": 0.729
   },
   {
    "cases": [
@@ -180,9 +180,9 @@
    ],
    "identical": 4,
    "audio_s": 29.73,
-   "wall_s": 1.839,
-   "times_real_time": 16.2,
-   "slowest_s": 1.837
+   "wall_s": 1.786,
+   "times_real_time": 16.6,
+   "slowest_s": 1.784
   },
   {
    "cases": [
@@ -199,9 +199,9 @@
    ],
    "identical": 4,
    "audio_s": 18.07,
-   "wall_s": 1.546,
-   "times_real_time": 11.7,
-   "slowest_s": 1.544
+   "wall_s": 1.496,
+   "times_real_time": 12.1,
+   "slowest_s": 1.494
   },
   {
    "cases": [
@@ -218,9 +218,9 @@
    ],
    "identical": 4,
    "audio_s": 71.2,
-   "wall_s": 1.166,
-   "times_real_time": 61.1,
-   "slowest_s": 1.165
+   "wall_s": 1.173,
+   "times_real_time": 60.7,
+   "slowest_s": 1.172
   },
   {
    "cases": [
@@ -233,9 +233,9 @@
    ],
    "identical": 2,
    "audio_s": 35.6,
-   "wall_s": 0.706,
-   "times_real_time": 50.4,
-   "slowest_s": 0.706
+   "wall_s": 0.713,
+   "times_real_time": 50.0,
+   "slowest_s": 0.712
   }
  ]
 }
